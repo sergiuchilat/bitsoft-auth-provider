@@ -1,4 +1,4 @@
-name: "[DEV] CI/CD Auth Provider API"
+name: "[MAIN] CI/CD Auth Provider API"
 
 on:
   push:
