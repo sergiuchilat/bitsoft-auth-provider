@@ -9,6 +9,7 @@ import AppConfig from '@/config/app-config';
 import { JwtService } from '@nestjs/jwt';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
 import {Request} from 'express';
+import ClassicAuthGetTokenPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-get-token.payload.dto';
 
 @Injectable ()
 export class PassportJsService {
@@ -133,12 +134,12 @@ export class PassportJsService {
     };
   }
 
-  async getNewToken (payload: {email: string, provider: OauthProvider}, request: Request) {
+  async getNewToken (payload: ClassicAuthGetTokenPayloadDto, request: Request) {
     const existingCredentials = await this.oauthCredentialRepository.findOne ({
       where: { email: payload.email, provider: payload.provider },
       relations: ['user']
     });
 
-    return await this.generateToken(existingCredentials, request);
+    return this.generateToken(existingCredentials, request);
   }
 }

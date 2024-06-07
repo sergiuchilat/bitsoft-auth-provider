@@ -15,15 +15,14 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const crossDomainToken = AppConfig.app.cross_domain_token === '1';
+    const isCrossDomainToken = AppConfig.app.cross_domain_token === 1;
 
-    if (crossDomainToken) {
+    if (isCrossDomainToken) {
       const requestDomain = this.getRequestDomain(user);
       if (!this.isSubdomainOf(host, requestDomain)) {
         throw new UnauthorizedException('Token domain mismatch');
       }
     }
-
 
     return true;
   }
