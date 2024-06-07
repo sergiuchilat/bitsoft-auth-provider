@@ -186,20 +186,20 @@ export class ClassicAuthService {
     if (!existingClassicCredentials) {
       throw new HttpException ('Invalid token', HttpStatus.NOT_FOUND);
     }
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try{
       const result = await this.classicAuthRepository.update ({
-      activation_code: token,
-      status: AuthMethodStatus.NEW,
-      created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired())
-    }, {
-      status: AuthMethodStatus.ACTIVE,
-      user_id: existingClassicCredentials.user_id,
-      activation_code: null,
-      name: existingClassicCredentials.name
-    });
+        activation_code: token,
+        status: AuthMethodStatus.NEW,
+        created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired())
+      }, {
+        status: AuthMethodStatus.ACTIVE,
+        user_id: existingClassicCredentials.user_id,
+        activation_code: null,
+        name: existingClassicCredentials.name
+      });
 
       if (!result?.affected) {
         const message = {
@@ -214,36 +214,36 @@ export class ClassicAuthService {
 
       await queryRunner.commitTransaction();
 
-    const activationToken = this.jwtService.sign (TokenGeneratorService.generatePayload (
-      existingClassicCredentials.user.uuid,
-      OauthProvider.CLASSIC,
-      {
-        email: existingClassicCredentials.user.email,
-        name: existingClassicCredentials.user.name,
-        isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
-      }
-    ), {
-      secret: AppConfig.jwt.privateKey,
-      expiresIn: AppConfig.jwt.expiresIn,
-      algorithm: 'RS256'
-    });
+      const activationToken = this.jwtService.sign (TokenGeneratorService.generatePayload (
+        existingClassicCredentials.user.uuid,
+        OauthProvider.CLASSIC,
+        {
+          email: existingClassicCredentials.user.email,
+          name: existingClassicCredentials.user.name,
+          isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+        }
+      ), {
+        secret: AppConfig.jwt.privateKey,
+        expiresIn: AppConfig.jwt.expiresIn,
+        algorithm: 'RS256'
+      });
 
-    return {
-      token: token,
-      activation_token: activationToken,
-      status: AuthMethodStatus.ACTIVE
-    };
+      return {
+        token: token,
+        activation_token: activationToken,
+        status: AuthMethodStatus.ACTIVE
+      };
     } catch (error) {
-        await queryRunner.rollbackTransaction();
-        console.log('Error activate user', error);
-        const message = {
-            message: this.i18n.t('auth.errors.activate_user', {
-                lang: language,
-            })
-        };
-        throw new HttpException (message, HttpStatus.CONFLICT);
+      await queryRunner.rollbackTransaction();
+      console.log('Error activate user', error);
+      const message = {
+        message: this.i18n.t('auth.errors.activate_user', {
+          lang: language,
+        })
+      };
+      throw new HttpException (message, HttpStatus.CONFLICT);
     } finally {
-        await queryRunner.release();
+      await queryRunner.release();
     }
   }
 
