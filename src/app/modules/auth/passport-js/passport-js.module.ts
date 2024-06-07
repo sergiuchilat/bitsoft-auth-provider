@@ -16,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
       OauthCredentialEntity, UserEntity
     ]),
   ],
+  exports: [PassportJsService],
   controllers: [
     PassportJsController
   ],

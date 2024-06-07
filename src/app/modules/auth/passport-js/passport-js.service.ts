@@ -8,6 +8,8 @@ import { TokenGeneratorService } from '@/app/modules/common/token-generator.serv
 import AppConfig from '@/config/app-config';
 import { JwtService } from '@nestjs/jwt';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
+import {Request} from 'express';
+import ClassicAuthGetTokenPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-get-token.payload.dto';
 
 @Injectable ()
 export class PassportJsService {
@@ -83,12 +85,16 @@ export class PassportJsService {
     return existingUser;
   }
 
-  async getTokenByCode (code: string) {
+  async getTokenByCode (code: string, request: Request) {
     const existingCredentials = await this.oauthCredentialRepository.findOne ({
       where: { token_activation_code: code },
       relations: ['user']
     });
 
+    return await this.generateToken(existingCredentials, request);
+  }
+
+  async generateToken (existingCredentials: OauthCredentialEntity, request: Request) {
     if (!existingCredentials) {
       throw new HttpException ('Not found', 404);
     }
@@ -99,12 +105,22 @@ export class PassportJsService {
       {
         email: existingCredentials.email,
         name: existingCredentials.user.name,
-        photo: existingCredentials.photo
+        photo: existingCredentials.photo,
+        domain: request.hostname
       }
     ), {
       secret: AppConfig.jwt.privateKey,
       expiresIn: AppConfig.jwt.expiresIn,
-      algorithm: "RS256"
+      algorithm: 'RS256'
+    });
+
+    const refreshToken = this.jwtService.sign({
+      email: existingCredentials.email,
+      provider: existingCredentials.provider
+    }, {
+      secret: AppConfig.jwt.privateKey,
+      expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
+      algorithm: 'RS256'
     });
 
     await this.oauthCredentialRepository.update (existingCredentials.id, {
@@ -114,7 +130,16 @@ export class PassportJsService {
 
     return {
       token,
-      refresh_token: null
+      refresh_token: refreshToken
     };
+  }
+
+  async getNewToken (payload: ClassicAuthGetTokenPayloadDto, request: Request) {
+    const existingCredentials = await this.oauthCredentialRepository.findOne ({
+      where: { email: payload.email, provider: payload.provider },
+      relations: ['user']
+    });
+
+    return this.generateToken(existingCredentials, request);
   }
 }

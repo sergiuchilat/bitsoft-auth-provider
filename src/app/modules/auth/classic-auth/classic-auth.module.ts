@@ -8,6 +8,7 @@ import { HttpModule } from '@nestjs/axios';
 import { MailerService } from '@/app/modules/auth/classic-auth/mailer.service';
 import { UserEntity } from '@/app/modules/users/user.entity';
 import { UsersService } from '@/app/modules/users/users.service';
+import {PassportJsModule} from '@/app/modules/auth/passport-js/passport-js.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { UsersService } from '@/app/modules/users/users.service';
     HttpModule.register ({
       timeout: 5000,
       maxRedirects: 5,
-    })
+    }),
+    PassportJsModule
   ],
   providers: [ClassicAuthService, UsersService, JwtService, MailerService],
   controllers: [ClassicAuthController]
