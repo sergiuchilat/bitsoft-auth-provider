@@ -7,7 +7,7 @@ on:
 
 env:
   APP_NAME: bitsoft-auth
-  APP_VERSION: "v1.0.1-beta"
+  APP_VERSION: "v1.0.2-beta"
   NETWORK: auth-provider
 
 jobs:
