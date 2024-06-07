@@ -144,35 +144,48 @@ export class ClassicAuthService {
     const existingClassicCredentials = await this.classicAuthRepository.findOne({
       where: {
         activation_code: token,
-        status: AuthMethodStatus.NEW,
+        status: AuthMethodStatus.NEW
       },
+      relations: ['user']
     });
 
     if (!existingClassicCredentials) {
       throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
     }
 
-    const result = await this.classicAuthRepository.update(
-      {
-        activation_code: token,
-        status: AuthMethodStatus.NEW,
-        created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
-      },
-      {
-        status: AuthMethodStatus.ACTIVE,
-        user_id: existingClassicCredentials.user_id,
-        activation_code: null,
-        name: existingClassicCredentials.name,
-      },
-    );
+    const result = await this.classicAuthRepository.update ({
+      activation_code: token,
+      status: AuthMethodStatus.NEW,
+      created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired())
+    }, {
+      status: AuthMethodStatus.ACTIVE,
+      user_id: existingClassicCredentials.user_id,
+      activation_code: null,
+      name: existingClassicCredentials.name
+    });
 
     if (!result?.affected) {
       throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
     }
 
+    const activationToken = this.jwtService.sign (TokenGeneratorService.generatePayload (
+      existingClassicCredentials.user.uuid,
+      OauthProvider.CLASSIC,
+      {
+        email: existingClassicCredentials.user.email,
+        name: existingClassicCredentials.user.name,
+        isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+      }
+    ), {
+      secret: AppConfig.jwt.privateKey,
+      expiresIn: AppConfig.jwt.expiresIn,
+      algorithm: 'RS256'
+    });
+
     return {
       token: token,
-      status: AuthMethodStatus.ACTIVE,
+      activation_token: activationToken,
+      status: AuthMethodStatus.ACTIVE
     };
   }
 
