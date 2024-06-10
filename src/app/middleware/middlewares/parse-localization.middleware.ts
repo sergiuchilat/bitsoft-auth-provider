@@ -9,11 +9,11 @@ export class ParseLocalizationMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     //console.log('ParseLocalizationMiddleware')
     try {
-      //const localization = req.headers['x-localization']?.toString()?.toLowerCase() || Language.en;
-      //req.localization = setLanguage(localization as Language);
+      const localization = req.headers['x-localization']?.toString()?.toLowerCase() || Language.en;
+      req.localization = setLanguage(localization as Language);
     } catch (e) {
       console.log(e);
-      //req.localization = Language.en;
+      req.localization = Language.en;
     } finally {
       next();
     }
