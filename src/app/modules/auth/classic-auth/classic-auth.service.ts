@@ -20,6 +20,7 @@ import { AuthMethodStatus } from '@/app/modules/common/enums/auth-method.status'
 import { UserEntity } from '@/app/modules/users/user.entity';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
 
@@ -56,8 +57,12 @@ export class ClassicAuthService {
 
     if (existingUser && passwordMatch) {
       return {
-        token: this.jwtService.sign(
-          TokenGeneratorService.generatePayload(existingUser.user.uuid, OauthProvider.CLASSIC, {
+        token: this.jwtService.sign (
+        TokenGeneratorService.generatePayload (
+          TokenType.ACCESS,
+          existingUser.user.uuid,
+          OauthProvider.CLASSIC,
+          {
             email: existingUser.email,
             name: existingUser.user.name,
             isActive: existingUser.status === AuthMethodStatus.ACTIVE,
@@ -178,8 +183,11 @@ export class ClassicAuthService {
       throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
     }
 
-    const activationToken = this.jwtService.sign(
-      TokenGeneratorService.generatePayload(existingClassicCredentials.user.uuid, OauthProvider.CLASSIC, {
+    const activationToken = this.jwtService.sign (TokenGeneratorService.generatePayload (
+      TokenType.ACTIVATION,
+      existingClassicCredentials.user.uuid,
+      OauthProvider.CLASSIC,
+      {
         email: existingClassicCredentials.user.email,
         name: existingClassicCredentials.user.name,
         isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,

@@ -8,6 +8,7 @@ import { TokenGeneratorService } from '@/app/modules/common/token-generator.serv
 import AppConfig from '@/config/app-config';
 import { JwtService } from '@nestjs/jwt';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
+import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 
 @Injectable ()
 export class PassportJsService {
@@ -94,6 +95,7 @@ export class PassportJsService {
     }
 
     const token = this.jwtService.sign (TokenGeneratorService.generatePayload (
+      TokenType.ACCESS,
       existingCredentials.user.uuid,
       existingCredentials.provider,
       {
@@ -104,7 +106,7 @@ export class PassportJsService {
     ), {
       secret: AppConfig.jwt.privateKey,
       expiresIn: AppConfig.jwt.expiresIn,
-      algorithm: "RS256"
+      algorithm: 'RS256'
     });
 
     await this.oauthCredentialRepository.update (existingCredentials.id, {
