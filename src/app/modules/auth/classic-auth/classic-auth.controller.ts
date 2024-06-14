@@ -15,8 +15,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClassicAuthService } from './classic-auth.service';
 import ClassicAuthRegisterPayloadDto from './dto/classic-auth-register.payload.dto';
 import ClassicAuthLoginPayloadDto from './dto/classic-auth-login.payload.dto';
-import ClassicAuthActivateResendPayloadDto
-  from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
+import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -52,20 +51,29 @@ export class ClassicAuthController {
 
   @ApiOperation({ summary: 'Activate user account' })
   @Patch('activate/:token')
-  async activate(@Res() response: Response, @Param('token', ParseUUIDPipe) token: string, @Req () request: Request,) {
+  async activate(
+    @Res() response: Response,
+    @Param('token', ParseUUIDPipe) token: string,
+    @Req() request: Request,
+  ) {
     response.status(HttpStatus.OK).send(await this.classicAuthService.activate(token, request.localization));
   }
 
-  @ApiOperation ({summary: 'Resend activation email'})
-  @Post ('activate/resend')
-  async resendActivationEmail (
-      @Res () response: Response,
-      @Body() classicAuthActivateResendPayloadDto: ClassicAuthActivateResendPayloadDto,
-      @Req() request: Request
+  @ApiOperation({ summary: 'Resend activation email' })
+  @Post('activate/resend')
+  resendActivationEmail(
+    @Res() response: Response,
+    @Body() classicAuthActivateResendPayloadDto: ClassicAuthActivateResendPayloadDto,
+    @Req() request: Request,
   ) {
     return response
-      .status (HttpStatus.OK)
-      .send (await this.classicAuthService.resendActivationEmail(classicAuthActivateResendPayloadDto, request.localization));
+      .status(HttpStatus.OK)
+      .send(
+        this.classicAuthService.resendActivationEmail(
+          classicAuthActivateResendPayloadDto,
+          request.localization,
+        ),
+      );
   }
 
   @ApiOperation({ summary: 'Request password reset(---! needs to be implemented)' })
