@@ -23,7 +23,7 @@ import utc from 'dayjs/plugin/utc';
 import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
-
+import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
 dayjs.extend(utc);
 
 @Injectable()
@@ -37,7 +37,7 @@ export class ClassicAuthService {
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
-    private readonly i18n: I18nService,
+    private readonly i18nService: I18nService,
   ) {
     this.codeExpiresIn = AppConfig.authProviders.classic.code_expires_in;
   }
@@ -79,7 +79,7 @@ export class ClassicAuthService {
     }
 
     throw new HttpException(
-      this.i18n.t('auth.errors.invalid_credentials', {
+      this.i18nService.t('auth.errors.invalid_credentials', {
         lang: language,
       }),
       HttpStatus.UNAUTHORIZED,
@@ -129,7 +129,7 @@ export class ClassicAuthService {
       console.log('Error registering user', error);
 
       throw new HttpException(
-        this.i18n.t('auth.errors.error_registering', {
+        this.i18nService.t('auth.errors.error_registering', {
           lang: language,
         }),
         HttpStatus.CONFLICT,
@@ -139,7 +139,45 @@ export class ClassicAuthService {
     }
   }
 
-  async activate(token: string) {
+  async resendActivationEmail(
+    classicAuthActivateResendPayloadDto: ClassicAuthActivateResendPayloadDto,
+    language: Language,
+  ) {
+    const message = {
+      message: this.i18nService.t('auth.mail.activation', {
+        lang: language,
+      }),
+    };
+    try {
+      const user = await this.classicAuthRepository.findOne({
+        where: { email: classicAuthActivateResendPayloadDto.email },
+      });
+
+      if (!user) {
+        return message;
+      }
+
+      const activationCode = v4();
+      await this.classicAuthRepository.update(
+        { email: user.email },
+        {
+          activation_code: activationCode,
+        },
+      );
+
+      await this.mailerService.sendActivationEmail(
+        classicAuthActivateResendPayloadDto.email,
+        this.generateActivationLink(activationCode),
+        user.name,
+      );
+
+      return message;
+    } catch (e) {
+      throw new HttpException('Error sending activation message', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async activate(token: string, language: Language) {
     // await this.classicAuthRepository.delete ({
     //   status: AuthMethodStatusEnum.NEW,
     //   created_at: LessThan (new Date (new Date ().getTime () - AppConfig.authProviders.classic.code_expires_in *
@@ -165,48 +203,72 @@ export class ClassicAuthService {
     if (!existingClassicCredentials) {
       throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
     }
-
-    const result = await this.classicAuthRepository.update(
-      {
-        activation_code: token,
-        status: AuthMethodStatus.NEW,
-        created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
-      },
-      {
-        status: AuthMethodStatus.ACTIVE,
-        user_id: existingClassicCredentials.user_id,
-        activation_code: null,
-        name: existingClassicCredentials.name,
-      },
-    );
-
-    if (!result?.affected) {
-      throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
-    }
-
-    const activationToken = this.jwtService.sign(
-      TokenGeneratorService.generatePayload(
-        TokenType.ACTIVATION,
-        existingClassicCredentials.user.uuid,
-        OauthProvider.CLASSIC,
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const result = await this.classicAuthRepository.update(
         {
-          email: existingClassicCredentials.user.email,
-          name: existingClassicCredentials.user.name,
-          isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+          activation_code: token,
+          status: AuthMethodStatus.NEW,
+          created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
         },
-      ),
-      {
-        secret: AppConfig.jwt.privateKey,
-        expiresIn: AppConfig.jwt.expiresIn,
-        algorithm: 'RS256',
-      },
-    );
+        {
+          status: AuthMethodStatus.ACTIVE,
+          user_id: existingClassicCredentials.user_id,
+          activation_code: null,
+          name: existingClassicCredentials.name,
+        },
+      );
 
-    return {
-      token: token,
-      activation_token: activationToken,
-      status: AuthMethodStatus.ACTIVE,
-    };
+      if (!result?.affected) {
+        const message = {
+          message: this.i18nService.t('auth.errors.invalid_token', {
+            lang: language,
+          }),
+        };
+        throw new HttpException(message, HttpStatus.NOT_FOUND);
+      }
+
+      await this.usersService.activate(existingClassicCredentials.user_id);
+
+      await queryRunner.commitTransaction();
+
+      const activationToken = this.jwtService.sign(
+        TokenGeneratorService.generatePayload(
+          TokenType.ACTIVATION,
+          existingClassicCredentials.user.uuid,
+          OauthProvider.CLASSIC,
+          {
+            email: existingClassicCredentials.user.email,
+            name: existingClassicCredentials.user.name,
+            isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+          },
+        ),
+        {
+          secret: AppConfig.jwt.privateKey,
+          expiresIn: AppConfig.jwt.expiresIn,
+          algorithm: 'RS256',
+        },
+      );
+
+      return {
+        token: token,
+        activation_token: activationToken,
+        status: AuthMethodStatus.ACTIVE,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.log('Error activate user', error);
+      const message = {
+        message: this.i18nService.t('auth.errors.activate_user', {
+          lang: language,
+        }),
+      };
+      throw new HttpException(message, HttpStatus.CONFLICT);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private calculateCreationDateOfTokenToBeExpired() {

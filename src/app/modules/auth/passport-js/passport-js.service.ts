@@ -23,7 +23,6 @@ export class PassportJsService {
     req: any,
     provider: OauthProvider,
   ): Promise<any> {
-
     if (!req?.user) {
       throw new HttpException ('Not found', 401);
     }
@@ -32,6 +31,7 @@ export class PassportJsService {
     const existingCredentials = await this.findExistingCredentials(provider, req.user.id);
 
     if (existingCredentials?.id) {
+
       await this.updateTokenCode(existingCredentials.id, tokenCode);
 
       return {

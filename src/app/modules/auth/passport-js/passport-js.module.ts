@@ -9,6 +9,7 @@ import { OauthCredentialEntity } from '@/app/modules/auth/passport-js/entities/o
 import { UsersService } from '@/app/modules/users/users.service';
 import { UserEntity } from '@/app/modules/users/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import {UsersRepository} from '@/app/modules/users/users.repository';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { JwtService } from '@nestjs/jwt';
   providers: [
     PassportJsService,
     UsersService,
+    UsersRepository,
     GoogleStrategy,
     VkStrategy,
     FbStrategy,

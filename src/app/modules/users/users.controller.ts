@@ -1,75 +1,66 @@
-import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
+import { Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/app/modules/users/users.service';
+import { Response, Request } from 'express';
+import { UserPaginatorDto } from '@/app/modules/users/dto/user-paginator.dto';
 
-@ApiTags ('Users')
-@Controller ({
+@ApiTags('Users')
+@Controller({
   version: '1',
   path: 'users',
-
 })
 export class UsersController {
-  constructor (
-    private readonly usersService: UsersService
-  ) {
+  constructor(private readonly usersService: UsersService) {}
+
+  @ApiOperation({ summary: 'Get all users' })
+  @Get()
+  async getAll(@Res() response: Response, @Query() userPaginatorDto: UserPaginatorDto) {
+    response.status(HttpStatus.OK).send(await this.usersService.getList(userPaginatorDto));
   }
 
-  @ApiOperation ({ summary: 'Get all users(---! ---! needs to be implemented)' })
-  @Get ()
-  getAll () {
-    // Paginated list of users. Just system admin can get all users
-    return 'Get all users';
+  @ApiOperation({ summary: 'Get a user by uuid' })
+  @Get('/:uuid')
+  async get(@Res() response: Response, @Param('uuid') uuid: string, @Req() request: Request) {
+    response.status(HttpStatus.OK).send(await this.usersService.getByUUID(uuid, request.localization));
   }
 
-  @ApiOperation ({ summary: 'Get a user(---! needs to be implemented)' })
-  @Get ('/:uuid')
-  get (uuid: string) {
-    // Get a user by uuid. Just system admin can get a user
-    return 'Get a user ' + uuid;
+  @ApiOperation({ summary: 'Block user' })
+  @Patch('block/:uuid')
+  async block(@Res() response: Response, @Param('uuid') uuid: string) {
+    response.status(HttpStatus.OK).send(await this.usersService.block(uuid));
   }
 
-
-  @ApiOperation ({ summary: 'Block user(---! needs to be implemented)' })
-  @Patch ('block/:uuid')
-  async block () {
-    // Block a user by uuid. Just system admin can block a user
-    // when user is blocked he can't use any of the auth methods
-    return 'BLock a user';
-  }
-
-  @ApiOperation ({ summary: 'Unblock user(---! needs to be implemented)' })
-  @Patch ('unblock/:uuid')
-  async unblock () {
+  @ApiOperation({ summary: 'Unblock user' })
+  @Patch('unblock/:uuid')
+  unblock(@Res() response: Response, @Param('uuid') uuid: string) {
     // Unblock a user by uuid. Just system admin can unblock a user
     // when user is unblocked he can use any of the auth methods
-    return 'Unblock a user';
+    response.status(HttpStatus.OK).send(this.usersService.unblock(uuid));
   }
 
-  @ApiOperation ({ summary: 'Delete user(---! needs to be implemented)' })
-  @Delete ('/:uuid')
-  async delete (id: number): Promise<any> {
-    // Delete a user by uuid. Just system admin can delete a user
-    // also delete all auth methods attached to the user
-    return await this.usersService.delete (id);
+  @ApiOperation({ summary: 'Delete user' })
+  @Delete('/:uuid')
+  async delete(@Res() response: Response, @Param('uuid') uuid: string): Promise<any> {
+    response.status(HttpStatus.OK).send(await this.usersService.delete(uuid));
   }
 
-  @ApiOperation ({ summary: 'Attach an auth method to a user(---! needs to be implemented)' })
-  @Post ('auth-method')
-  async attachAuthMethod (): Promise<any> {
+  @ApiOperation({ summary: 'Attach an auth method to a user(---! needs to be implemented)' })
+  @Post('auth-method')
+  async attachAuthMethod(): Promise<any> {
     // Attach an auth method to a user. Just user can attach auth method to himself. Parse uuid from token
     // System admin can't attach auth method to any user
     return 'Attach an auth method to a user';
   }
 
-  @ApiOperation ({ summary: 'Detach an auth method from a user(---! needs to be implemented)' })
-  @Delete ('auth-method')
-  async detachAuthMethod (): Promise<any> {
+  @ApiOperation({ summary: 'Detach an auth method from a user(---! needs to be implemented)' })
+  @Delete('auth-method')
+  async detachAuthMethod(): Promise<any> {
     // Detach an auth method from a user. Just user can detach auth method from himself. Parse uuid from token
     // System admin can also detach auth method from any user
     return 'Detach an auth method from a user';
   }
 
-  @ApiOperation ({ summary: 'Logout(---! needs to be implemented)' })
+  @ApiOperation({ summary: 'Logout(---! needs to be implemented)' })
   @Delete('logout')
   async logout() {
     // Just user can execute logout for himself
@@ -80,11 +71,10 @@ export class UsersController {
     return 'Logout';
   }
 
-  @ApiOperation ({ summary: 'Check token status(---! needs to be implemented)' })
-  @Get ('/token/:uuid/status')
-  async checkTokenStatus () {
+  @ApiOperation({ summary: 'Check token status(---! needs to be implemented)' })
+  @Get('/token/:uuid/status')
+  async checkTokenStatus() {
     // Check token status. Just user can check their own token status. Parse uuid from token
     return 'Check token status';
   }
-
 }
