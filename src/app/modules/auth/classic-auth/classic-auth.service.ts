@@ -57,16 +57,17 @@ export class ClassicAuthService {
 
     if (existingUser && passwordMatch) {
       return {
-        token: this.jwtService.sign (
-        TokenGeneratorService.generatePayload (
-          TokenType.ACCESS,
-          existingUser.user.uuid,
-          OauthProvider.CLASSIC,
-          {
-            email: existingUser.email,
-            name: existingUser.user.name,
-            isActive: existingUser.status === AuthMethodStatus.ACTIVE,
-          }),
+        token: this.jwtService.sign(
+          TokenGeneratorService.generatePayload(
+            TokenType.ACCESS,
+            existingUser.user.uuid,
+            OauthProvider.CLASSIC,
+            {
+              email: existingUser.email,
+              name: existingUser.user.name,
+              isActive: existingUser.status === AuthMethodStatus.ACTIVE,
+            },
+          ),
           {
             secret: AppConfig.jwt.privateKey,
             expiresIn: AppConfig.jwt.expiresIn,
@@ -183,15 +184,17 @@ export class ClassicAuthService {
       throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
     }
 
-    const activationToken = this.jwtService.sign (TokenGeneratorService.generatePayload (
-      TokenType.ACTIVATION,
-      existingClassicCredentials.user.uuid,
-      OauthProvider.CLASSIC,
-      {
-        email: existingClassicCredentials.user.email,
-        name: existingClassicCredentials.user.name,
-        isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
-      }),
+    const activationToken = this.jwtService.sign(
+      TokenGeneratorService.generatePayload(
+        TokenType.ACTIVATION,
+        existingClassicCredentials.user.uuid,
+        OauthProvider.CLASSIC,
+        {
+          email: existingClassicCredentials.user.email,
+          name: existingClassicCredentials.user.name,
+          isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+        },
+      ),
       {
         secret: AppConfig.jwt.privateKey,
         expiresIn: AppConfig.jwt.expiresIn,
