@@ -1,5 +1,16 @@
-import {Request, Response} from 'express';
-import {Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Req, Res} from '@nestjs/common';
+import { Request, Response } from 'express';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClassicAuthService } from './classic-auth.service';
 import ClassicAuthRegisterPayloadDto from './dto/classic-auth-register.payload.dto';
@@ -7,50 +18,42 @@ import ClassicAuthLoginPayloadDto from './dto/classic-auth-login.payload.dto';
 import ClassicAuthActivateResendPayloadDto
   from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
 
-@ApiTags ('Auth: Classic')
-@Controller ({
+@ApiTags('Auth: Classic')
+@Controller({
   version: '1',
   path: 'auth',
-
 })
 export class ClassicAuthController {
-  constructor (
-    private readonly classicAuthService: ClassicAuthService,
-  ) {
-  }
+  constructor(private readonly classicAuthService: ClassicAuthService) {}
 
-  @ApiOperation ({summary: 'User login with email and password'})
-  @Post ('login')
-  async login (
+  @ApiOperation({ summary: 'User login with email and password' })
+  @Post('login')
+  async login(
     @Body() classicAuthLoginPayloadDto: ClassicAuthLoginPayloadDto,
-    @Res () response: Response,
+    @Res() response: Response,
+    @Req() request: Request,
   ) {
     response
-      .status (HttpStatus.OK)
-      .send (await this.classicAuthService.login (classicAuthLoginPayloadDto));
+      .status(HttpStatus.OK)
+      .send(await this.classicAuthService.login(classicAuthLoginPayloadDto, request.localization));
   }
 
-  @ApiOperation ({summary: 'User registration with email and password'})
-  @Post ('register')
-  async register (
+  @ApiOperation({ summary: 'User registration with email and password' })
+  @Post('register')
+  async register(
     @Body() classicAuthRegisterPayloadDto: ClassicAuthRegisterPayloadDto,
-    @Res () response: Response,
+    @Res() response: Response,
+    @Req() request: Request,
   ) {
     response
-      .status (HttpStatus.CREATED)
-      .send (await this.classicAuthService.register (classicAuthRegisterPayloadDto));
+      .status(HttpStatus.CREATED)
+      .send(await this.classicAuthService.register(classicAuthRegisterPayloadDto, request.localization));
   }
 
-  @ApiOperation ({summary: 'Activate user account'})
-  @Patch ('activate/:token')
-  async activate (
-    @Res () response: Response,
-    @Param ('token', ParseUUIDPipe) token: string,
-    @Req () request: Request,
-  ) {
-    response
-      .status (HttpStatus.OK)
-      .send (await this.classicAuthService.activate (token, request.localization));
+  @ApiOperation({ summary: 'Activate user account' })
+  @Patch('activate/:token')
+  async activate(@Res() response: Response, @Param('token', ParseUUIDPipe) token: string, @Req () request: Request,) {
+    response.status(HttpStatus.OK).send(await this.classicAuthService.activate(token, request.localization));
   }
 
   @ApiOperation ({summary: 'Resend activation email'})
@@ -65,9 +68,9 @@ export class ClassicAuthController {
       .send (await this.classicAuthService.resendActivationEmail(classicAuthActivateResendPayloadDto, request.localization));
   }
 
-  @ApiOperation ({summary: 'Request password reset(---! needs to be implemented)'})
-  @Post ('password/reset/request')
-  resetPasswordStart () {
+  @ApiOperation({ summary: 'Request password reset(---! needs to be implemented)' })
+  @Post('password/reset/request')
+  resetPasswordStart() {
     // Request password reset.
     // Payload should contain email address
     // after sending email, return success message
@@ -92,9 +95,9 @@ export class ClassicAuthController {
     return 'resetPassword';
   }
 
-  @ApiOperation ({summary: 'Verify password reset token(---! needs to be implemented)'})
-  @Get ('password/reset/:token')
-  verifyResetPasswordToken () {
+  @ApiOperation({ summary: 'Verify password reset token(---! needs to be implemented)' })
+  @Get('password/reset/:token')
+  verifyResetPasswordToken() {
     // Verify password reset token.
     // Token should be valid
     // Token should be unique
@@ -105,9 +108,9 @@ export class ClassicAuthController {
     return 'verifyResetPasswordToken';
   }
 
-  @ApiOperation ({summary: 'Confirm password reset(---! needs to be implemented)'})
-  @Patch ('password/reset/confirm')
-  resetPasswordConfirm () {
+  @ApiOperation({ summary: 'Confirm password reset(---! needs to be implemented)' })
+  @Patch('password/reset/confirm')
+  resetPasswordConfirm() {
     // Confirm password reset.
     // Payload should contain token and new password
     // Token should be valid
@@ -122,9 +125,9 @@ export class ClassicAuthController {
     return 'resetPassword';
   }
 
-  @ApiOperation ({summary: 'Change password(---! needs to be implemented)'})
-  @Patch ('password/change')
-  changePassword () {
+  @ApiOperation({ summary: 'Change password(---! needs to be implemented)' })
+  @Patch('password/change')
+  changePassword() {
     // Change password.
     // Payload should contain old password and new password
     // Old password should be valid
@@ -137,10 +140,9 @@ export class ClassicAuthController {
     return 'changePassword';
   }
 
-  @ApiOperation ({summary: 'Update email(---! needs to be implemented)'})
-  @Patch ('email/update')
+  @ApiOperation({ summary: 'Update email(---! needs to be implemented)' })
+  @Patch('email/update')
   updateEmail() {
     return 'updateEmail';
   }
-
 }

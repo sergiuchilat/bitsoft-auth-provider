@@ -1,13 +1,13 @@
-name: "[DEV] CI/CD Auth Provider API"
+name: "[MAIN] CI/CD Auth Provider API"
 
 on:
   push:
     branches:
-      - dev
+      - main
 
 env:
   APP_NAME: bitsoft-auth
-  APP_VERSION: "v1.0.3-beta"
+  APP_VERSION: "v1.0.4-beta"
   NETWORK: auth-provider
 
 jobs:

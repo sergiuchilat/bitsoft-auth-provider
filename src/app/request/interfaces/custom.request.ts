@@ -1,7 +1,7 @@
-import {Language} from '@/app/enum/language.enum';
+import { Language } from '@/app/enum/language.enum';
 
 declare module 'express-serve-static-core' {
-    interface Request {
-        localization?: Language;
-    }
+  interface Request {
+    localization?: Language;
+  }
 }
