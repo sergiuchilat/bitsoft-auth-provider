@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { DataSource, IsNull, MoreThan, Not } from 'typeorm';
@@ -24,6 +24,8 @@ import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
 import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
+import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
+import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
 dayjs.extend(utc);
 
 @Injectable()
@@ -275,39 +277,78 @@ export class ClassicAuthService {
     return dayjs().utc().subtract(this.codeExpiresIn, 'seconds').toDate();
   }
 
-  async startResetPassword(email: string) {
+  async startResetPassword(
+    classicAuthResetPasswordPayloadDto: ClassicAuthResetPasswordPayloadDto,
+    language: Language,
+  ) {
+    const message = {
+      message: this.i18nService.t('auth.mail.activation', {
+        lang: language,
+      }),
+    };
     const credentials = await this.classicAuthRepository.findOne({
       where: {
-        email: email,
+        email: classicAuthResetPasswordPayloadDto.email,
       },
       relations: ['user'],
     });
 
     if (!credentials) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      return message;
     }
 
     const resetCode = v4();
 
     await this.classicAuthRepository.update(
       {
-        email: email,
+        email: classicAuthResetPasswordPayloadDto.email,
       },
       {
         reset_password_code: resetCode,
+        expired_at_reset_password_code: new Date(),
       },
     );
 
     await this.mailerService.sendResetPasswordEmail(
-      email,
+      classicAuthResetPasswordPayloadDto.email,
       `${credentials.user.name}`,
       this.generateResetPasswordLink(resetCode),
     );
 
-    return {
-      email: email,
-      status: AuthMethodStatus.NEW,
-    };
+    return message;
+  }
+
+  public async verifyResetPassword(token: string) {
+    const credentials = await this.classicAuthRepository.findOne({
+      where: {
+        reset_password_code: token,
+        expired_at_reset_password_code: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
+      },
+    });
+
+    if (!credentials) {
+      throw new BadRequestException('Invalid reset password token');
+    }
+
+    return { token };
+  }
+  public async resetPasswordConfirm(
+    classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto,
+  ) {
+    await this.verifyResetPassword(classicAuthResetPasswordConfirmPayloadDto.token);
+
+    await this.classicAuthRepository.update(
+      {
+        reset_password_code: classicAuthResetPasswordConfirmPayloadDto.token,
+      },
+      {
+        password: await hash(classicAuthResetPasswordConfirmPayloadDto.password, 10),
+        reset_password_code: null,
+        expired_at_reset_password_code: null,
+      },
+    );
+
+    return 'Password reset successfully';
   }
 
   private generateActivationLink(token: string) {

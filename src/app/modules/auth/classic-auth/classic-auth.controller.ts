@@ -16,6 +16,8 @@ import { ClassicAuthService } from './classic-auth.service';
 import ClassicAuthRegisterPayloadDto from './dto/classic-auth-register.payload.dto';
 import ClassicAuthLoginPayloadDto from './dto/classic-auth-login.payload.dto';
 import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
+import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
+import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -76,61 +78,38 @@ export class ClassicAuthController {
       );
   }
 
-  @ApiOperation({ summary: 'Request password reset(---! needs to be implemented)' })
+  @ApiOperation({ summary: 'Request password reset' })
   @Post('password/reset/request')
-  resetPasswordStart() {
-    // Request password reset.
-    // Payload should contain email address
-    // after sending email, return success message
-    // if email not found, return also success message to prevent email enumeration attack.
-    // The message "If the email is registered, a password reset email will be sent" should be returned
-    // Generate a token and send it to the user email
-    // The token should be valid for 1 hour
-    // The token should be unique
-    // The token should be stored in the database
-    // The token should be hashed
-    // The token should be sent to the user email
-    // The token should be used to reset the password
-    // The token should be deleted after the password is reset
-    // Generated link = {FRONTEND_URL}/password/reset/{TOKEN}
-    // Frontend will send a GET request to {AUTH_MICROSERVICE}/password/reset/{TOKEN}
-    // The token should be verified
-    // If token is not valid, return an error
-    // If token is valid then
-    // Frontend will send a PATCH request to {AUTH_MICROSERVICE}/password/reset/confirm with the token and the new password
-    // The password should be hashed
-
-    return 'resetPassword';
+  async resetPasswordStart(
+    @Res() response: Response,
+    @Body() classicAuthResetPasswordPayloadDto: ClassicAuthResetPasswordPayloadDto,
+    @Req() req: Request,
+  ) {
+    return response
+      .status(HttpStatus.OK)
+      .send(
+        await this.classicAuthService.startResetPassword(
+          classicAuthResetPasswordPayloadDto,
+          req.localization,
+        ),
+      );
   }
 
-  @ApiOperation({ summary: 'Verify password reset token(---! needs to be implemented)' })
+  @ApiOperation({ summary: 'Verify password reset token' })
   @Get('password/reset/:token')
-  verifyResetPasswordToken() {
-    // Verify password reset token.
-    // Token should be valid
-    // Token should be unique
-    // Token should be hashed
-    // Token should be stored in the database
-    // If token is not valid, return an error
-    // If token is valid, return success message with the token in response body
-    return 'verifyResetPasswordToken';
+  async verifyResetPasswordToken(@Res() response: Response, @Param('token', ParseUUIDPipe) token: string) {
+    return response.status(HttpStatus.OK).send(await this.classicAuthService.verifyResetPassword(token));
   }
 
-  @ApiOperation({ summary: 'Confirm password reset(---! needs to be implemented)' })
+  @ApiOperation({ summary: 'Confirm password reset' })
   @Patch('password/reset/confirm')
-  resetPasswordConfirm() {
-    // Confirm password reset.
-    // Payload should contain token and new password
-    // Token should be valid
-    // Token should be unique
-    // Token should be hashed
-    // Token should be stored in the database
-    // If token is not valid, return an error
-    // If token is valid, return success message
-    // The password should be hashed
-    // The password should be stored in the database
-    // The token should be deleted
-    return 'resetPassword';
+  async resetPasswordConfirm(
+    @Res() response: Response,
+    @Body() classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto,
+  ) {
+    return response
+      .status(HttpStatus.OK)
+      .send(await this.classicAuthService.resetPasswordConfirm(classicAuthResetPasswordConfirmPayloadDto));
   }
 
   @ApiOperation({ summary: 'Change password(---! needs to be implemented)' })
