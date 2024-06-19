@@ -6,7 +6,7 @@ const buildApiDocs = (app, ConfigEnv: ConfigInterface['docs']) => {
     .setTitle(ConfigEnv.title)
     .setDescription(ConfigEnv.description)
     .setVersion('v1.0.3-beta')
-    //.addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, ConfigEnv.authName)
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, ConfigEnv.authName)
     // .addGlobalParameters({
     //   name: 'x-api-key',
     //   in: 'header',

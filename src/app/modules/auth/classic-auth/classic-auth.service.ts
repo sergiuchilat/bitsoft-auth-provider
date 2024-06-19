@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { DataSource, IsNull, MoreThan, Not } from 'typeorm';
@@ -24,6 +24,12 @@ import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
 import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
+import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
+import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
+import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
+import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
+import ClassicAuthUpdateEmailResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.response.dto';
+import ClassicAuthVerifyResetPasswordResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-reset-password.response.dto';
 dayjs.extend(utc);
 
 @Injectable()
@@ -275,38 +281,110 @@ export class ClassicAuthService {
     return dayjs().utc().subtract(this.codeExpiresIn, 'seconds').toDate();
   }
 
-  async startResetPassword(email: string) {
-    const credentials = await this.classicAuthRepository.findOne({
-      where: {
-        email: email,
-      },
-      relations: ['user'],
-    });
+  async startResetPassword(
+    classicAuthResetPasswordPayloadDto: ClassicAuthResetPasswordPayloadDto,
+    language: Language,
+  ) {
+    const message = {
+      message: this.i18nService.t('auth.mail.activation', {
+        lang: language,
+      }),
+    };
+    const credentials = await this.classicAuthRepository.findOneByEmail(
+      classicAuthResetPasswordPayloadDto.email,
+    );
 
     if (!credentials) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      return message;
     }
 
     const resetCode = v4();
 
-    await this.classicAuthRepository.update(
-      {
-        email: email,
-      },
-      {
-        reset_password_code: resetCode,
-      },
-    );
+    this.classicAuthRepository.updateResetPasswordCode(classicAuthResetPasswordPayloadDto.email, resetCode);
 
     await this.mailerService.sendResetPasswordEmail(
-      email,
+      classicAuthResetPasswordPayloadDto.email,
       `${credentials.user.name}`,
       this.generateResetPasswordLink(resetCode),
     );
 
+    return message;
+  }
+
+  public async verifyResetPassword(token: string): Promise<ClassicAuthVerifyResetPasswordResponseDto> {
+    const credentials = await this.classicAuthRepository.findOne({
+      where: {
+        reset_password_code: token,
+        reset_password_code_expired_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
+      },
+    });
+
+    if (!credentials) {
+      throw new BadRequestException('Invalid reset password token');
+    }
+
+    return { token };
+  }
+
+  public async resetPasswordConfirm(
+    classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto,
+  ) {
+    await this.verifyResetPassword(classicAuthResetPasswordConfirmPayloadDto.token);
+
+    await this.classicAuthRepository.update(
+      {
+        reset_password_code: classicAuthResetPasswordConfirmPayloadDto.token,
+      },
+      {
+        password: await hash(classicAuthResetPasswordConfirmPayloadDto.password, 10),
+        reset_password_code: null,
+        reset_password_code_expired_at: null,
+      },
+    );
+
+    return 'Password reset successfully';
+  }
+
+  public async changePassword(
+    classicAuthChangePasswordPayloadDto: ClassicAuthChangePasswordPayloadDto,
+    user,
+  ): Promise<ClassicAuthUpdateEmailResponseDto> {
+    const existingUser = await this.usersService.findByUUID(user.uuid);
+    const credentials = await this.classicAuthRepository.findOne({ where: { user_id: existingUser.id } });
+    const matchPassword = await compare(
+      classicAuthChangePasswordPayloadDto.old_password,
+      credentials.password,
+    );
+
+    if (!matchPassword) {
+      throw new BadRequestException('Invalid old password');
+    }
+
+    await this.classicAuthRepository.update(credentials.id, {
+      password: await hash(classicAuthChangePasswordPayloadDto.new_password, 10),
+    });
+
     return {
-      email: email,
-      status: AuthMethodStatus.NEW,
+      message: 'Password changed successfully',
+    };
+  }
+
+  public async updateEmail(
+    classicAuthUpdateEmailPayloadDto: ClassicAuthUpdateEmailPayloadDto,
+    user,
+  ): Promise<ClassicAuthUpdateEmailResponseDto> {
+    const existingUser = await this.usersService.findByUUID(user.uuid);
+    await this.classicAuthRepository.update(
+      { email: existingUser.email },
+      {
+        email: classicAuthUpdateEmailPayloadDto.email,
+      },
+    );
+
+    await this.usersService.updateEmail(user.uuid, classicAuthUpdateEmailPayloadDto.email);
+
+    return {
+      message: 'Email updated successfully',
     };
   }
 

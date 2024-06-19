@@ -107,4 +107,11 @@ export class UsersService {
       await manager.remove(user);
     });
   }
+
+  findByUUID(uuid: string) {
+    return this.usersRepository.findOne({ where: { uuid } });
+  }
+  updateEmail(uuid: string, email: string) {
+    return this.usersRepository.update({ uuid }, { email });
+  }
 }

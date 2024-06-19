@@ -11,6 +11,7 @@ export class ParseTokenMiddleware implements NestMiddleware {
     //console.log('ParseTokenMiddleware')
     try {
       const token = this.extractTokenFromHeader(req);
+
       if (!token) {
         next();
         return;
@@ -23,7 +24,6 @@ export class ParseTokenMiddleware implements NestMiddleware {
 
       req.user = {
         uuid: parsedToken.sub,
-        roles: parsedToken.roles,
       };
       next();
     } catch (e) {
