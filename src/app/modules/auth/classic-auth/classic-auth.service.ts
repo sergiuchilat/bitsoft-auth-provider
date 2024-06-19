@@ -26,6 +26,8 @@ import { I18nService } from 'nestjs-i18n';
 import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
 import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
 import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
+import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
+import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
 dayjs.extend(utc);
 
 @Injectable()
@@ -349,6 +351,42 @@ export class ClassicAuthService {
     );
 
     return 'Password reset successfully';
+  }
+
+  public async changePassword(
+    classicAuthChangePasswordPayloadDto: ClassicAuthChangePasswordPayloadDto,
+    user,
+  ) {
+    const existingUser = await this.usersService.findByUUID(user.uuid);
+    const credentials = await this.classicAuthRepository.findOne({ where: { user_id: existingUser.id } });
+
+    if (!(await compare(classicAuthChangePasswordPayloadDto.old_password, credentials.password))) {
+      throw new BadRequestException('Invalid old password');
+    }
+
+    await this.classicAuthRepository.update(credentials.id, {
+      password: await hash(classicAuthChangePasswordPayloadDto.new_password, 10),
+    });
+
+    return {
+      message: 'Password changed successfully',
+    };
+  }
+
+  public async updateEmail(classicAuthUpdateEmailPayloadDto: ClassicAuthUpdateEmailPayloadDto, user) {
+    const existingUser = await this.usersService.findByUUID(user.uuid);
+    await this.classicAuthRepository.update(
+      { email: existingUser.email },
+      {
+        email: classicAuthUpdateEmailPayloadDto.email,
+      },
+    );
+
+    await this.usersService.updateEmail(user.uuid, classicAuthUpdateEmailPayloadDto.email);
+
+    return {
+      message: 'Email updated successfully',
+    };
   }
 
   private generateActivationLink(token: string) {

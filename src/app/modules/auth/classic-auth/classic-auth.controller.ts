@@ -10,14 +10,18 @@ import {
   Post,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClassicAuthService } from './classic-auth.service';
 import ClassicAuthRegisterPayloadDto from './dto/classic-auth-register.payload.dto';
 import ClassicAuthLoginPayloadDto from './dto/classic-auth-login.payload.dto';
 import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
 import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
 import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
+import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
+import { AuthGuard } from '@/app/middleware/guards/auth.guard';
+import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -68,7 +72,7 @@ export class ClassicAuthController {
     @Body() classicAuthActivateResendPayloadDto: ClassicAuthActivateResendPayloadDto,
     @Req() request: Request,
   ) {
-    return response
+    response
       .status(HttpStatus.OK)
       .send(
         this.classicAuthService.resendActivationEmail(
@@ -85,7 +89,7 @@ export class ClassicAuthController {
     @Body() classicAuthResetPasswordPayloadDto: ClassicAuthResetPasswordPayloadDto,
     @Req() req: Request,
   ) {
-    return response
+    response
       .status(HttpStatus.OK)
       .send(
         await this.classicAuthService.startResetPassword(
@@ -98,7 +102,7 @@ export class ClassicAuthController {
   @ApiOperation({ summary: 'Verify password reset token' })
   @Get('password/reset/:token')
   async verifyResetPasswordToken(@Res() response: Response, @Param('token', ParseUUIDPipe) token: string) {
-    return response.status(HttpStatus.OK).send(await this.classicAuthService.verifyResetPassword(token));
+    response.status(HttpStatus.OK).send(await this.classicAuthService.verifyResetPassword(token));
   }
 
   @ApiOperation({ summary: 'Confirm password reset' })
@@ -107,29 +111,36 @@ export class ClassicAuthController {
     @Res() response: Response,
     @Body() classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto,
   ) {
-    return response
+    response
       .status(HttpStatus.OK)
       .send(await this.classicAuthService.resetPasswordConfirm(classicAuthResetPasswordConfirmPayloadDto));
   }
 
-  @ApiOperation({ summary: 'Change password(---! needs to be implemented)' })
+  @ApiOperation({ summary: 'Change password' })
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @Patch('password/change')
-  changePassword() {
-    // Change password.
-    // Payload should contain old password and new password
-    // Old password should be valid
-    // Request must contain a valid JWT token
-    // User uuid should be parsed from the JWT token
-    // Check if the old password is correct for the user extracted from the JWT token
-    // If old password is not correct, return an error
-    // If old password is correct, change the password to the new password
-    // The new password should be hashed
-    return 'changePassword';
+  async changePassword(
+    @Res() response: Response,
+    @Body() classicAuthChangePasswordPayloadDto: ClassicAuthChangePasswordPayloadDto,
+    @Req() req: Request,
+  ) {
+    response
+      .status(HttpStatus.OK)
+      .send(await this.classicAuthService.changePassword(classicAuthChangePasswordPayloadDto, req.user));
   }
 
-  @ApiOperation({ summary: 'Update email(---! needs to be implemented)' })
+  @ApiOperation({ summary: 'Update email' })
   @Patch('email/update')
-  updateEmail() {
-    return 'updateEmail';
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  async updateEmail(
+    @Res() response: Response,
+    @Body() classicAuthUpdateEmailPayloadDto: ClassicAuthUpdateEmailPayloadDto,
+    @Req() req: Request,
+  ) {
+    response
+      .status(HttpStatus.OK)
+      .send(await this.classicAuthService.updateEmail(classicAuthUpdateEmailPayloadDto, req.user));
   }
 }

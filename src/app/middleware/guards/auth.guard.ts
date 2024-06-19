@@ -10,11 +10,7 @@ export class AuthGuard implements CanActivate {
   }
 
   private validateRequest(user: RequestUserInterface): boolean {
-    if (!user.uuid) {
-      throw new UnauthorizedException();
-    }
-
-    if (!user.roles) {
+    if (!user?.uuid) {
       throw new UnauthorizedException();
     }
 
