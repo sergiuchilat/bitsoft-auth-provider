@@ -11,7 +11,6 @@ export class ClassicAuthEntity {
   @Column({
     length: 255,
     unique: true,
-    nullable: false,
   })
   email: string;
 
@@ -49,7 +48,7 @@ export class ClassicAuthEntity {
     nullable: true,
     type: 'timestamptz',
   })
-  expired_at_reset_password_code: Date;
+  reset_password_code_expired_at: Date;
 
   @Column({
     nullable: true,

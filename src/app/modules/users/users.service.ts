@@ -112,6 +112,6 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { uuid } });
   }
   updateEmail(uuid: string, email: string) {
-    return this.usersRepository.update({ uuid: uuid }, { email });
+    return this.usersRepository.update({ uuid }, { email });
   }
 }

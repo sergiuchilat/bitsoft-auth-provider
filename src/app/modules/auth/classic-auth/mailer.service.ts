@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import fs from 'node:fs';
 import parse from 'node-html-parser';
 import { HttpService } from '@nestjs/axios';
@@ -7,8 +7,11 @@ import { HttpService } from '@nestjs/axios';
 export class MailerService {
   private readonly notifyServiceUrl = process.env.NOTIFY_SERVICE_URL;
   private readonly notifyServiceApiKey = process.env.NOTIFY_SERVICE_KEY;
+  private readonly logger = new Logger('Mailer');
 
-  async sendActivationEmail(email: string, activationLink: string, name = '') {
+  constructor(private readonly httpService: HttpService) {}
+
+  public sendActivationEmail(email: string, activationLink: string, name = '') {
     const notifyServiceTemplate = 'registration-confirmation';
     const templateData = fs.readFileSync(`src/data/email-templates/${notifyServiceTemplate}/en.html`, 'utf8');
 
@@ -19,12 +22,10 @@ export class MailerService {
       .replaceAll('{CONFIRM_LINK}', activationLink)
       .replaceAll('{PROJECT_URL}', process.env.PROJECT_URL);
 
-    return await this.sendNotifyOnEmail(email, emailBody);
+    return this.sendNotificationOnEmail(email, emailBody);
   }
 
-  constructor(private readonly httpService: HttpService) {}
-
-  async sendResetPasswordEmail(email: string, name = '', resetPasswordLink: string) {
+  public sendResetPasswordEmail(email: string, name = '', resetPasswordLink: string) {
     const notifyServiceTemplate = 'password-reset';
     const templateData = fs.readFileSync(`src/data/email-templates/${notifyServiceTemplate}/en.html`, 'utf8');
 
@@ -35,39 +36,29 @@ export class MailerService {
       .replaceAll('{RESET_PASSWORD_LINK}', resetPasswordLink)
       .replaceAll('{PROJECT_URL}', process.env.PROJECT_URL);
 
-    return await this.sendNotifyOnEmail(email, emailBody);
+    return this.sendNotificationOnEmail(email, emailBody);
   }
 
-  private async sendNotifyOnEmail(email: string, emailBody: string) {
+  private async sendNotificationOnEmail(email: string, emailBody: string) {
     try {
-      const notifySendUrl = `${this.notifyServiceUrl}`;
-      await this.httpService.axiosRef
-        .post(
-          notifySendUrl,
-          {
-            subject: parse(emailBody).querySelector('title').text,
-            body: parse(emailBody).querySelector('body').innerHTML,
-            language: 'en',
-            receivers: [email],
+      await this.httpService.axiosRef.post(
+        this.notifyServiceUrl,
+        {
+          subject: parse(emailBody).querySelector('title').text,
+          body: parse(emailBody).querySelector('body').innerHTML,
+          language: 'en',
+          receivers: [email],
+        },
+        {
+          headers: {
+            'x-api-key': `${this.notifyServiceApiKey}`,
           },
-          {
-            headers: {
-              'x-api-key': `${this.notifyServiceApiKey}`,
-            },
-          },
-        )
-        .then((response) => {
-          console.log('response', response.data);
-          return response.data;
-        })
-        .catch((error) => {
-          console.error('error', error);
-          return error;
-        });
+        },
+      );
 
-      console.log('Email sent to', email);
+      this.logger.log('Email sent to', email);
     } catch (e) {
-      console.error(e);
+      this.logger.log(e);
     }
 
     return emailBody;

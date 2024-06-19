@@ -28,6 +28,8 @@ import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/
 import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
 import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
+import ClassicAuthUpdateEmailResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.response.dto';
+import ClassicAuthVerifyResetPasswordResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-reset-password.response.dto';
 dayjs.extend(utc);
 
 @Injectable()
@@ -288,12 +290,9 @@ export class ClassicAuthService {
         lang: language,
       }),
     };
-    const credentials = await this.classicAuthRepository.findOne({
-      where: {
-        email: classicAuthResetPasswordPayloadDto.email,
-      },
-      relations: ['user'],
-    });
+    const credentials = await this.classicAuthRepository.findOneByEmail(
+      classicAuthResetPasswordPayloadDto.email,
+    );
 
     if (!credentials) {
       return message;
@@ -301,15 +300,7 @@ export class ClassicAuthService {
 
     const resetCode = v4();
 
-    await this.classicAuthRepository.update(
-      {
-        email: classicAuthResetPasswordPayloadDto.email,
-      },
-      {
-        reset_password_code: resetCode,
-        expired_at_reset_password_code: new Date(),
-      },
-    );
+    this.classicAuthRepository.updateResetPasswordCode(classicAuthResetPasswordPayloadDto.email, resetCode);
 
     await this.mailerService.sendResetPasswordEmail(
       classicAuthResetPasswordPayloadDto.email,
@@ -320,11 +311,11 @@ export class ClassicAuthService {
     return message;
   }
 
-  public async verifyResetPassword(token: string) {
+  public async verifyResetPassword(token: string): Promise<ClassicAuthVerifyResetPasswordResponseDto> {
     const credentials = await this.classicAuthRepository.findOne({
       where: {
         reset_password_code: token,
-        expired_at_reset_password_code: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
+        reset_password_code_expired_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
       },
     });
 
@@ -334,6 +325,7 @@ export class ClassicAuthService {
 
     return { token };
   }
+
   public async resetPasswordConfirm(
     classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto,
   ) {
@@ -346,7 +338,7 @@ export class ClassicAuthService {
       {
         password: await hash(classicAuthResetPasswordConfirmPayloadDto.password, 10),
         reset_password_code: null,
-        expired_at_reset_password_code: null,
+        reset_password_code_expired_at: null,
       },
     );
 
@@ -356,11 +348,15 @@ export class ClassicAuthService {
   public async changePassword(
     classicAuthChangePasswordPayloadDto: ClassicAuthChangePasswordPayloadDto,
     user,
-  ) {
+  ): Promise<ClassicAuthUpdateEmailResponseDto> {
     const existingUser = await this.usersService.findByUUID(user.uuid);
     const credentials = await this.classicAuthRepository.findOne({ where: { user_id: existingUser.id } });
+    const matchPassword = await compare(
+      classicAuthChangePasswordPayloadDto.old_password,
+      credentials.password,
+    );
 
-    if (!(await compare(classicAuthChangePasswordPayloadDto.old_password, credentials.password))) {
+    if (!matchPassword) {
       throw new BadRequestException('Invalid old password');
     }
 
@@ -373,7 +369,10 @@ export class ClassicAuthService {
     };
   }
 
-  public async updateEmail(classicAuthUpdateEmailPayloadDto: ClassicAuthUpdateEmailPayloadDto, user) {
+  public async updateEmail(
+    classicAuthUpdateEmailPayloadDto: ClassicAuthUpdateEmailPayloadDto,
+    user,
+  ): Promise<ClassicAuthUpdateEmailResponseDto> {
     const existingUser = await this.usersService.findByUUID(user.uuid);
     await this.classicAuthRepository.update(
       { email: existingUser.email },
