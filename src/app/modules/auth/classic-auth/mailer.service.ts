@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import fs from 'node:fs';
 import parse from 'node-html-parser';
 import { HttpService } from '@nestjs/axios';
+import { Language } from '@/app/enum/language.enum';
 
 @Injectable()
 export class MailerService {
@@ -11,9 +12,12 @@ export class MailerService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  public sendActivationEmail(email: string, activationLink: string, name = '') {
+  public sendActivationEmail(email: string, activationLink: string, name = '', language: Language) {
     const notifyServiceTemplate = 'registration-confirmation';
-    const templateData = fs.readFileSync(`src/data/email-templates/${notifyServiceTemplate}/en.html`, 'utf8');
+    const templateData = fs.readFileSync(
+      `src/data/email-templates/${notifyServiceTemplate}/${language || 'en'}.html`,
+      'utf8',
+    );
 
     const emailBody = templateData
       .replaceAll('{PROJECT_NAME}', process.env.PROJECT_NAME)

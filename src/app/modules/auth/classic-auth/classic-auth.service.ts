@@ -125,6 +125,7 @@ export class ClassicAuthService {
         classicAuthRegisterPayloadDto.email,
         this.generateActivationLink(activationCode),
         classicAuthRegisterPayloadDto.name,
+        language,
       );
       await queryRunner.commitTransaction();
       console.log('registeredClassicCredentials', registeredClassicCredentials);
@@ -175,6 +176,7 @@ export class ClassicAuthService {
         classicAuthActivateResendPayloadDto.email,
         this.generateActivationLink(activationCode),
         user.name,
+        language,
       );
 
       return message;
