@@ -61,7 +61,7 @@ export class ClassicAuthService {
     });
     const passwordMatch = await compare(classicAuthLoginPayloadDto.password, existingUser?.password || '');
 
-    if (existingUser && passwordMatch) {
+    if (existingUser && passwordMatch && existingUser.status !== AuthMethodStatus.BLOCKED) {
       return {
         token: this.jwtService.sign(
           TokenGeneratorService.generatePayload(
