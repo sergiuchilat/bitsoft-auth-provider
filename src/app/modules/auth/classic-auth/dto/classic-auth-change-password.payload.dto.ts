@@ -12,7 +12,7 @@ export default class ClassicAuthChangePasswordPayloadDto {
   @Length(8, 255, {
     message: 'New password must contain from $constraint1 to $constraint2 characters',
   })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*d).+$/, {
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
     message: 'New password must contain at least one lowercase letter, one uppercase letter, and one digit',
   })
   new_password: string;
