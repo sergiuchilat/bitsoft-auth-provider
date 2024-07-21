@@ -22,6 +22,7 @@ import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classi
 import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
 import { AuthGuard } from '@/app/middleware/guards/auth.guard';
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
+import requestIp from 'request-ip';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -38,9 +39,11 @@ export class ClassicAuthController {
     @Res() response: Response,
     @Req() request: Request,
   ) {
+    const clientIp = requestIp.getClientIp(request);
+
     response
       .status(HttpStatus.OK)
-      .send(await this.classicAuthService.login(classicAuthLoginPayloadDto, request.localization));
+      .send(await this.classicAuthService.login(classicAuthLoginPayloadDto, request.localization, clientIp));
   }
 
   @ApiOperation({ summary: 'User registration with email and password' })

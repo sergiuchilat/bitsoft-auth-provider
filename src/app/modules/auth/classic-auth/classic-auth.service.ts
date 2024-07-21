@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
-import { DataSource, IsNull, MoreThan, Not } from 'typeorm';
+import { DataSource, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { ClassicAuthEntity } from '@/app/modules/auth/classic-auth/classic-auth.entity';
 import { ClassicAuthRepository } from '@/app/modules/auth/classic-auth/classic-auth.repository';
 import ClassicAuthLoginPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-login.payload.dto';
@@ -30,6 +30,8 @@ import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
 import ClassicAuthUpdateEmailResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.response.dto';
 import ClassicAuthVerifyResetPasswordResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-reset-password.response.dto';
+import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
+
 dayjs.extend(utc);
 
 @Injectable()
@@ -39,6 +41,8 @@ export class ClassicAuthService {
   constructor(
     @InjectRepository(ClassicAuthEntity)
     private readonly classicAuthRepository: ClassicAuthRepository,
+    @InjectRepository(AuthLogEntity)
+    private readonly authLogRepository: Repository<AuthLogEntity>,
     private readonly usersService: UsersService,
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
@@ -51,7 +55,14 @@ export class ClassicAuthService {
   async login(
     classicAuthLoginPayloadDto: ClassicAuthLoginPayloadDto,
     language: Language,
+    clientIp: string,
   ): Promise<AuthLoginResponseDto> {
+
+    await this.authLogRepository.save({
+      email: classicAuthLoginPayloadDto.email,
+      ip: clientIp
+    });
+
     const existingUser = await this.classicAuthRepository.findOne({
       where: {
         email: classicAuthLoginPayloadDto.email,
