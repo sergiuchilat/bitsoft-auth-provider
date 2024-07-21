@@ -27,7 +27,10 @@ import { IpFilterMiddleware } from '@/app/middleware/middlewares/ip-filter.middl
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ParseTokenMiddleware).exclude('(.*)login(.*)', '(.*)register(.*)').forRoutes('*');
+    consumer
+      .apply(ParseTokenMiddleware)
+      .exclude('(.*)login(.*)', '(.*)register(.*)', '(.*)oauth(.*)')
+      .forRoutes('*');
     consumer.apply(ParseLocalizationMiddleware).forRoutes('*');
     consumer.apply(IpFilterMiddleware).forRoutes('*');
   }
