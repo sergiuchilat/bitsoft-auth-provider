@@ -10,17 +10,26 @@ import { JwtService } from '@nestjs/jwt';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
 import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { UserStatusEnum } from '@/app/modules/common/enums/user-status.enum';
+import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
 
 @Injectable()
 export class PassportJsService {
   constructor(
     @InjectRepository(OauthCredentialEntity)
     private readonly oauthCredentialRepository: Repository<OauthCredentialEntity>,
+    @InjectRepository(AuthLogEntity)
+    private readonly authLogRepository: Repository<AuthLogEntity>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(req: any, provider: OauthProvider): Promise<any> {
+  async login(req: any, provider: OauthProvider, clientIp: string): Promise<any> {
+
+    await this.authLogRepository.save({
+      email: req?.user?.email,
+      ip: clientIp
+    });
+
     if (!req?.user) {
       throw new HttpException('Not found', 401);
     }
