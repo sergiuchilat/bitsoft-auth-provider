@@ -55,7 +55,7 @@ export class OauthCredentialEntity {
     token_activation_code: string;
 
   @Column({
-    length: 2048,
+    length: 4096,
     nullable: true,
   })
     token: string;

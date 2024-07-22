@@ -26,7 +26,6 @@ module.exports = {
     'no-debugger': 'warn',
     'quotes': ['warn', 'single'],
     'prefer-const': 'error',
-    'indent': ['error', 2],
     'semi': ['warn', 'always'],
     'no-duplicate-case': 'error',
     'no-dupe-keys': 'error',

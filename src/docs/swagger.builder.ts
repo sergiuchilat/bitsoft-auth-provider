@@ -5,8 +5,8 @@ const buildApiDocs = (app, ConfigEnv: ConfigInterface['docs']) => {
   const config = new DocumentBuilder()
     .setTitle(ConfigEnv.title)
     .setDescription(ConfigEnv.description)
-    .setVersion('v1.0.2-beta')
-    //.addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, ConfigEnv.authName)
+    .setVersion('v1.0.7-beta')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, ConfigEnv.authName)
     // .addGlobalParameters({
     //   name: 'x-api-key',
     //   in: 'header',

@@ -11,18 +11,18 @@ export class AuthGuard implements CanActivate {
   }
 
   private validateRequest(user: RequestUserInterface, host: string): boolean {
-    if (!user.uuid) {
+    if (!user?.uuid) {
       throw new UnauthorizedException();
     }
 
-    const isCrossDomainToken = AppConfig.app.cross_domain_token === 1;
+      const isCrossDomainToken = AppConfig.app.cross_domain_token === 1;
 
-    if (isCrossDomainToken) {
-      const requestDomain = this.getRequestDomain(user);
-      if (!this.isSubdomainOf(host, requestDomain)) {
-        throw new UnauthorizedException('Token domain mismatch');
+      if (isCrossDomainToken) {
+          const requestDomain = this.getRequestDomain(user);
+          if (!this.isSubdomainOf(host, requestDomain)) {
+              throw new UnauthorizedException('Token domain mismatch');
+          }
       }
-    }
 
     return true;
   }
