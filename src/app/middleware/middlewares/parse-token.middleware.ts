@@ -24,6 +24,7 @@ export class ParseTokenMiddleware implements NestMiddleware {
 
       req.user = {
         uuid: parsedToken.sub,
+        domain: parsedToken.props?.domain
       };
       next();
     } catch (e) {

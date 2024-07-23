@@ -15,12 +15,13 @@ export default class EnvConfigStrategy {
     let JWT_PUBLIC_KEY = null;
     let JWT_PRIVATE_KEY = null;
     try {
-      JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY ?? fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH ?? '', 'utf8');
-      JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY ?? fs.readFileSync(process.env.JWT_PRIVATE_KEY_PATH ?? '', 'utf8');
+      JWT_PUBLIC_KEY =
+        process.env.JWT_PUBLIC_KEY ?? fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH ?? '', 'utf8');
+      JWT_PRIVATE_KEY =
+        process.env.JWT_PRIVATE_KEY ?? fs.readFileSync(process.env.JWT_PRIVATE_KEY_PATH ?? '', 'utf8');
     } catch (e) {
       console.log('Error reading JWT_PUBLIC_KEY_PATH', e.message);
     }
-
 
     this.config = {
       app: {
@@ -32,6 +33,7 @@ export default class EnvConfigStrategy {
         session: {
           secret: process.env.SESSION_SECRET,
         },
+        cross_domain_token: Number(process.env.CROSS_DOMAIN_TOKEN),
         log: {
           custom: process.env.APP_LOG_CUSTOM === 'true',
           levels: {
@@ -55,12 +57,12 @@ export default class EnvConfigStrategy {
           clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET,
           redirectURL: process.env.GOOGLE_AUTH_REDIRECT_URL,
         },
-        vk:{
+        vk: {
           clientId: process.env.VK_AUTH_CLIENT_ID,
           accessToken: process.env.VK_AUTH_ACCESS_TOKEN,
           serviceToken: process.env.VK_AUTH_SERVICE_TOKEN,
           redirectURL: process.env.VK_AUTH_REDIRECT_URL,
-        }
+        },
       },
       db: {
         host: process.env.DB_HOST,
@@ -74,6 +76,7 @@ export default class EnvConfigStrategy {
       jwt: {
         secret: process.env.JWT_SECRET_KEY,
         expiresIn: Number(process.env.JWT_TOKEN_EXPIRES_IN),
+        refreshTokenExpiresIn: Number(process.env.JWT_REFRESH_TOKEN_EXPIRES_IN),
         publicKeyPath: process.env.JWT_PUBLIC_KEY_PATH,
         publicKey: JWT_PUBLIC_KEY,
         privateKeyPath: process.env.JWT_PRIVATE_KEY_PATH,

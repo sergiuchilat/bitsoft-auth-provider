@@ -18,6 +18,7 @@ import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
       OauthCredentialEntity, UserEntity, AuthLogEntity
     ]),
   ],
+  exports: [PassportJsService],
   controllers: [
     PassportJsController
   ],

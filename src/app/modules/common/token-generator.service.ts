@@ -15,6 +15,7 @@ export class TokenGeneratorService {
         name: user.name,
         photo: user.photo,
         isActive: user.isActive,
+        domain: user.domain
       },
       sub
     };

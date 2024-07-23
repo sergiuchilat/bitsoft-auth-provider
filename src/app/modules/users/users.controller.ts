@@ -1,8 +1,9 @@
-import { Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
+import { Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/app/modules/users/users.service';
 import { Response, Request } from 'express';
 import { UserPaginatorDto } from '@/app/modules/users/dto/user-paginator.dto';
+import { AuthGuard } from '@/app/middleware/guards/auth.guard';
 
 @ApiTags('Users')
 @Controller({

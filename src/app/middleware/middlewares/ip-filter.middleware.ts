@@ -1,6 +1,5 @@
 import { ForbiddenException, Injectable, NestMiddleware } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from '@/app/modules/users/user.entity';
 import { UsersRepository } from '@/app/modules/users/users.repository';
 import { BlockedIpEntity } from '@/app/modules/blocked-ip/entities/blocked-ip.entity';
 import { BlockedIpRepository } from '@/app/modules/blocked-ip/repositories/blocked-ip.repository';
@@ -8,7 +7,6 @@ import { BlockedIpRepository } from '@/app/modules/blocked-ip/repositories/block
 @Injectable()
 export class IpFilterMiddleware implements NestMiddleware {
   constructor(
-    @InjectRepository(UserEntity)
     private readonly userRepository: UsersRepository,
     @InjectRepository(BlockedIpEntity)
     private readonly blockedIpRepository: BlockedIpRepository,
