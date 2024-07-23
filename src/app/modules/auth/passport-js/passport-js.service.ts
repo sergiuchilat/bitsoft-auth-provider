@@ -100,7 +100,7 @@ export class PassportJsService {
       relations: ['user'],
     });
 
-    return await this.generateToken(existingCredentials, hostname, language);
+    return this.generateToken(existingCredentials, hostname, language);
   }
 
   async generateToken(existingCredentials: OauthCredentialEntity, hostname: string, language: Language) {
