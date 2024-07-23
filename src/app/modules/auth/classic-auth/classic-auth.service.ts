@@ -1,5 +1,11 @@
 import { v4 } from 'uuid';
-import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { DataSource, IsNull, MoreThan, Not, Repository } from 'typeorm';
@@ -33,7 +39,6 @@ import ClassicAuthVerifyResetPasswordResponseDto from '@/app/modules/auth/classi
 import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
 import { PassportJsService } from '@/app/modules/auth/passport-js/passport-js.service';
 import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
-import { Request } from 'express';
 
 dayjs.extend(utc);
 
@@ -42,7 +47,6 @@ export class ClassicAuthService {
   private readonly codeExpiresIn: number;
 
   constructor(
-    @InjectRepository(ClassicAuthEntity)
     private readonly classicAuthRepository: ClassicAuthRepository,
     @InjectRepository(AuthLogEntity)
     private readonly authLogRepository: Repository<AuthLogEntity>,
@@ -60,11 +64,11 @@ export class ClassicAuthService {
     classicAuthLoginPayloadDto: ClassicAuthLoginPayloadDto,
     language: Language,
     clientIp: string,
+    hostname: string,
   ): Promise<AuthLoginResponseDto> {
-
     await this.authLogRepository.save({
       email: classicAuthLoginPayloadDto.email,
-      ip: clientIp
+      ip: clientIp,
     });
 
     const existingUser = await this.classicAuthRepository.findOne({
@@ -77,26 +81,7 @@ export class ClassicAuthService {
     const passwordMatch = await compare(classicAuthLoginPayloadDto.password, existingUser?.password || '');
 
     if (existingUser && passwordMatch && existingUser.status !== AuthMethodStatus.BLOCKED) {
-      return {
-        token: this.jwtService.sign(
-          TokenGeneratorService.generatePayload(
-            TokenType.ACCESS,
-            existingUser.user.uuid,
-            OauthProvider.CLASSIC,
-            {
-              email: existingUser.email,
-              name: existingUser.user.name,
-              isActive: existingUser.status === AuthMethodStatus.ACTIVE,
-            },
-          ),
-          {
-            secret: AppConfig.jwt.privateKey,
-            expiresIn: AppConfig.jwt.expiresIn,
-            algorithm: 'RS256',
-          },
-        ),
-        refresh_token: null,
-      };
+      return this.generateToken(existingUser, hostname);
     }
 
     throw new HttpException(
@@ -161,23 +146,32 @@ export class ClassicAuthService {
     }
   }
 
-    async refreshToken(classicAuthRefreshTokenPayloadDto: ClassicAuthRefreshTokenPayloadDto, request: Request) {
-        try {
-            const payload = this.jwtService.verify(classicAuthRefreshTokenPayloadDto.refreshToken, {
-                algorithms: ['RS256'],
-                publicKey: AppConfig.jwt.publicKey,
-            });
-            if (!payload.provider) {
-                const existingUser = await this.classicAuthRepository.findOneByEmail(payload.email);
+  async refreshToken(
+    classicAuthRefreshTokenPayloadDto: ClassicAuthRefreshTokenPayloadDto,
+    hostname: string,
+    language: Language,
+  ) {
+    try {
+      const payload = this.jwtService.verify(classicAuthRefreshTokenPayloadDto.refreshToken, {
+        algorithms: ['RS256'],
+        publicKey: AppConfig.jwt.publicKey,
+      });
 
-                return this.generateToken(existingUser, request);
-            }
+      if (payload.props.authProvider === OauthProvider.CLASSIC) {
+        const existingUser = await this.classicAuthRepository.findOneByEmail(payload.props.email);
 
-            return this.passportJsService.getNewToken(payload, request);
-        } catch (e) {
-            throw new UnauthorizedException('Invalid refresh token');
-        }
+        return this.generateToken(existingUser, hostname);
+      }
+
+      return this.passportJsService.getNewToken(payload.props, hostname, language);
+    } catch (e) {
+      throw new UnauthorizedException(
+        this.i18nService.t('auth.errors.invalid_refresh_token', {
+          lang: language,
+        }),
+      );
     }
+  }
 
   async resendActivationEmail(
     classicAuthActivateResendPayloadDto: ClassicAuthActivateResendPayloadDto,
@@ -431,31 +425,43 @@ export class ClassicAuthService {
     return process.env.CLASSIC_AUTH_RESET_PASSWORD_LINK.replace('{token}', token);
   }
 
-    private generateToken(existingUser: ClassicAuthEntity, request: Request) {
-        const refreshToken = this.jwtService.sign(
-            { email: existingUser.user.email },
-            {
-                secret: AppConfig.jwt.privateKey,
-                expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
-                algorithm: 'RS256',
-            },
-        );
+  private generateToken(existingUser: ClassicAuthEntity, hostname: string): AuthLoginResponseDto {
+    const refreshToken = this.jwtService.sign(
+      TokenGeneratorService.generatePayload(
+        TokenType.REFRESH,
+        existingUser.user.uuid,
+        OauthProvider.CLASSIC,
+        {
+          email: existingUser.user.email,
+        },
+      ),
+      {
+        secret: AppConfig.jwt.privateKey,
+        expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
+        algorithm: 'RS256',
+      },
+    );
 
-        return {
-            token: this.jwtService.sign(
-                TokenGeneratorService.generatePayload(existingUser.user.uuid, OauthProvider.CLASSIC, {
-                    email: existingUser.email,
-                    name: existingUser.user.name,
-                    isActive: existingUser.status === AuthMethodStatus.ACTIVE,
-                    domain: request.hostname,
-                }),
-                {
-                    secret: AppConfig.jwt.privateKey,
-                    expiresIn: AppConfig.jwt.expiresIn,
-                    algorithm: 'RS256',
-                },
-            ),
-            refresh_token: refreshToken,
-        };
-    }
+    return {
+      token: this.jwtService.sign(
+        TokenGeneratorService.generatePayload(
+          TokenType.ACCESS,
+          existingUser.user.uuid,
+          OauthProvider.CLASSIC,
+          {
+            email: existingUser.email,
+            name: existingUser.user.name,
+            isActive: existingUser.status === AuthMethodStatus.ACTIVE,
+            domain: hostname,
+          },
+        ),
+        {
+          secret: AppConfig.jwt.privateKey,
+          expiresIn: AppConfig.jwt.expiresIn,
+          algorithm: 'RS256',
+        },
+      ),
+      refresh_token: refreshToken,
+    };
+  }
 }

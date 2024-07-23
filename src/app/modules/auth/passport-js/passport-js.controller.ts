@@ -1,4 +1,4 @@
-import {Controller, Get, HttpStatus, Param, Req, Res, UseGuards} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { GoogleGuard } from '@/app/modules/auth/passport-js/guards/google.guard';
 import { VkGuard } from '@/app/modules/auth/passport-js/guards/vk.guard';
@@ -6,18 +6,15 @@ import { FbGuard } from '@/app/modules/auth/passport-js/guards/fb.guard';
 import { PassportJsService } from '@/app/modules/auth/passport-js/passport-js.service';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
 import requestIp from 'request-ip';
-import {Response, Request} from 'express';
+import { Response, Request } from 'express';
 
 @Controller({
   version: '1',
-  path: '/oauth'
+  path: '/oauth',
 })
 @ApiTags('Auth: PassportJs')
 export class PassportJsController {
-
-  constructor(
-    private readonly passportJsService: PassportJsService
-  ) {}
+  constructor(private readonly passportJsService: PassportJsService) {}
 
   @Get('google')
   @UseGuards(GoogleGuard)
@@ -28,7 +25,7 @@ export class PassportJsController {
   @Get('google/complete')
   @UseGuards(GoogleGuard)
   @ApiExcludeEndpoint()
-  async handleGoogleComplete(@Req() req: Request, @Res() res: Response){
+  async handleGoogleComplete(@Req() req: Request, @Res() res: Response) {
     const clientIp = requestIp.getClientIp(req);
     const response = await this.passportJsService.login(req, OauthProvider.GOOGLE, clientIp);
     res.redirect(`${process.env.REDIRECT_AFTER_LOGIN}?code=${response.token_code}`);
@@ -58,19 +55,16 @@ export class PassportJsController {
   @Get('fb/complete')
   @UseGuards(FbGuard)
   @ApiExcludeEndpoint()
-  async handleFbComplete(@Req() req: Request, @Res() res: Response){
+  async handleFbComplete(@Req() req: Request, @Res() res: Response) {
     const clientIp = requestIp.getClientIp(req);
     const response = await this.passportJsService.login(req, OauthProvider.FACEBOOK, clientIp);
     res.redirect(`${process.env.REDIRECT_AFTER_LOGIN}?code=${response.token_code}`);
   }
 
   @Get('token/:code')
-  async getToken(
-    @Param('code') code: string,
-    @Res () response: Response,
-    @Req () request: Request
-  ){
-    response.status(HttpStatus.OK)
-      .send(await this.passportJsService.getTokenByCode(code, request));
+  async getToken(@Param('code') code: string, @Res() response: Response, @Req() request: Request) {
+    response
+      .status(HttpStatus.OK)
+      .send(await this.passportJsService.getTokenByCode(code, request.hostname, request.localization));
   }
 }

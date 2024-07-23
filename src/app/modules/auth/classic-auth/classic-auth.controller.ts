@@ -23,9 +23,7 @@ import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth
 import { AuthGuard } from '@/app/middleware/guards/auth.guard';
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
 import requestIp from 'request-ip';
-import {
-  ClassicAuthRefreshTokenPayloadDto
-} from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
+import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -39,27 +37,40 @@ export class ClassicAuthController {
   @Post('login')
   async login(
     @Body() classicAuthLoginPayloadDto: ClassicAuthLoginPayloadDto,
-    @Res () response: Response,
-    @Req () request: Request
+    @Res() response: Response,
+    @Req() request: Request,
   ) {
     const clientIp = requestIp.getClientIp(request);
 
     response
-      .status (HttpStatus.OK)
-      .send (await this.classicAuthService.login (classicAuthLoginPayloadDto, request.localization, clientIp));
+      .status(HttpStatus.OK)
+      .send(
+        await this.classicAuthService.login(
+          classicAuthLoginPayloadDto,
+          request.localization,
+          clientIp,
+          request.hostname,
+        ),
+      );
   }
 
-    @Post ('/refresh-token')
-    @ApiOperation ({summary: 'Refresh token'})
-    async refreshToken (
-        @Body() classicAuthRefreshTokenPayloadDto: ClassicAuthRefreshTokenPayloadDto,
-        @Res () response: Response,
-        @Req () request: Request,
-    ) {
-        response
-            .status (HttpStatus.OK)
-            .send (await this.classicAuthService.refreshToken (classicAuthRefreshTokenPayloadDto, request));
-    }
+  @Post('/refresh-token')
+  @ApiOperation({ summary: 'Refresh token' })
+  async refreshToken(
+    @Body() classicAuthRefreshTokenPayloadDto: ClassicAuthRefreshTokenPayloadDto,
+    @Res() response: Response,
+    @Req() request: Request,
+  ) {
+    response
+      .status(HttpStatus.OK)
+      .send(
+        await this.classicAuthService.refreshToken(
+          classicAuthRefreshTokenPayloadDto,
+          request.hostname,
+          request.localization,
+        ),
+      );
+  }
 
   @ApiOperation({ summary: 'User registration with email and password' })
   @Post('register')

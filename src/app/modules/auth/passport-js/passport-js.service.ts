@@ -11,8 +11,9 @@ import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
 import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { UserStatusEnum } from '@/app/modules/common/enums/user-status.enum';
 import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
-import {Request} from 'express';
 import ClassicAuthGetTokenPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-get-token.payload.dto';
+import { Language } from '@/app/enum/language.enum';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class PassportJsService {
@@ -23,13 +24,13 @@ export class PassportJsService {
     private readonly authLogRepository: Repository<AuthLogEntity>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly i18nService: I18nService,
   ) {}
 
   async login(req: any, provider: OauthProvider, clientIp: string): Promise<any> {
-
     await this.authLogRepository.save({
       email: req?.user?.email,
-      ip: clientIp
+      ip: clientIp,
     });
 
     if (!req?.user) {
@@ -93,18 +94,23 @@ export class PassportJsService {
     return existingUser;
   }
 
-  async getTokenByCode (code: string, request: Request) {
-    const existingCredentials = await this.oauthCredentialRepository.findOne ({
+  async getTokenByCode(code: string, hostname: string, language: Language) {
+    const existingCredentials = await this.oauthCredentialRepository.findOne({
       where: { token_activation_code: code },
       relations: ['user'],
     });
 
-    return await this.generateToken(existingCredentials, request);
+    return await this.generateToken(existingCredentials, hostname, language);
   }
 
-  async generateToken (existingCredentials: OauthCredentialEntity, request: Request) {
+  async generateToken(existingCredentials: OauthCredentialEntity, hostname: string, language: Language) {
     if (!existingCredentials) {
-      throw new HttpException('Not found', 404);
+      throw new HttpException(
+        this.i18nService.t('auth.errors.not_found', {
+          lang: language,
+        }),
+        404,
+      );
     }
 
     const token = this.jwtService.sign(
@@ -116,24 +122,27 @@ export class PassportJsService {
           email: existingCredentials.email,
           name: existingCredentials.user.name,
           photo: existingCredentials.photo,
-            domain: request.hostname
+          domain: hostname,
         },
       ),
       {
         secret: AppConfig.jwt.privateKey,
         expiresIn: AppConfig.jwt.expiresIn,
-        algorithm: 'RS256'
+        algorithm: 'RS256',
       },
     );
 
-      const refreshToken = this.jwtService.sign({
-          email: existingCredentials.email,
-          provider: existingCredentials.provider
-      }, {
-          secret: AppConfig.jwt.privateKey,
-          expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
-          algorithm: 'RS256'
-      });
+    const refreshToken = this.jwtService.sign(
+      {
+        email: existingCredentials.email,
+        provider: existingCredentials.provider,
+      },
+      {
+        secret: AppConfig.jwt.privateKey,
+        expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
+        algorithm: 'RS256',
+      },
+    );
 
     await this.oauthCredentialRepository.update(existingCredentials.id, {
       token_activation_code: null,
@@ -142,16 +151,15 @@ export class PassportJsService {
 
     return {
       token,
-      refresh_token: refreshToken
+      refresh_token: refreshToken,
     };
   }
 
-  async getNewToken (payload: ClassicAuthGetTokenPayloadDto, request: Request) {
-    const existingCredentials = await this.oauthCredentialRepository.findOne ({
-      where: { email: payload.email, provider: payload.provider },
-      relations: ['user']
+  async getNewToken(payload: ClassicAuthGetTokenPayloadDto, hostname: string, language: Language) {
+    const existingCredentials = await this.oauthCredentialRepository.findOne({
+      where: { email: payload.email, provider: payload.authProvider },
+      relations: ['user'],
     });
-
-    return this.generateToken(existingCredentials, request);
+    return this.generateToken(existingCredentials, hostname, language);
   }
 }
