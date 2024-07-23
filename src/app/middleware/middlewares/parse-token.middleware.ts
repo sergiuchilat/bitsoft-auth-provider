@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UsersRepository } from '@/app/modules/users/users.repository';
 import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
+import { ValidatedRequest } from '@/app/request/interfaces/validated-request';
 
 @Injectable()
 export class ParseTokenMiddleware implements NestMiddleware {
@@ -35,18 +36,18 @@ export class ParseTokenMiddleware implements NestMiddleware {
 
       req.user = {
         uuid: parsedToken.sub,
-        domain: parsedToken.props?.domain
+        domain: parsedToken.props?.domain,
       };
 
       next();
     } catch (e) {
       throw new BadRequestException('Invalid token');
     } finally {
-      await this.logAuthAttempt(req);
+      await this.logAuthAttempt(req as ValidatedRequest);
     }
   }
 
-  private async logAuthAttempt(request: any) {
+  private async logAuthAttempt(request: ValidatedRequest) {
     const storedUser = await this.userRepository.findOneBy({ uuid: request.user?.uuid });
     const clientIp = requestIp.getClientIp(request);
 
