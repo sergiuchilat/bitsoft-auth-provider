@@ -22,7 +22,6 @@ import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classi
 import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
 import { AuthGuard } from '@/app/middleware/guards/auth.guard';
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
-import requestIp from 'request-ip';
 import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
 
 @ApiTags('Auth: Classic')
@@ -40,7 +39,7 @@ export class ClassicAuthController {
     @Res() response: Response,
     @Req() request: Request,
   ) {
-    const clientIp = requestIp.getClientIp(request);
+    const clientIp = request.headers['x-client-ip'] as string;
 
     response
       .status(HttpStatus.OK)

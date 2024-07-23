@@ -9,7 +9,7 @@ import { MailerService } from '@/app/modules/auth/classic-auth/mailer.service';
 import { UserEntity } from '@/app/modules/users/user.entity';
 import { UsersService } from '@/app/modules/users/users.service';
 import { UsersModule } from '@/app/modules/users/users.module';
-import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 import { PassportJsModule } from '@/app/modules/auth/passport-js/passport-js.module';
 import { ClassicAuthRepository } from '@/app/modules/auth/classic-auth/classic-auth.repository';
 

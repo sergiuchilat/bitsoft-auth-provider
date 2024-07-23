@@ -9,19 +9,13 @@ import { OauthCredentialEntity } from '@/app/modules/auth/passport-js/entities/o
 import { UsersService } from '@/app/modules/users/users.service';
 import { UserEntity } from '@/app/modules/users/user.entity';
 import { JwtService } from '@nestjs/jwt';
-import {UsersRepository} from '@/app/modules/users/users.repository';
-import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
+import { UsersRepository } from '@/app/modules/users/users.repository';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      OauthCredentialEntity, UserEntity, AuthLogEntity
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([OauthCredentialEntity, UserEntity, AuthLogEntity])],
   exports: [PassportJsService],
-  controllers: [
-    PassportJsController
-  ],
+  controllers: [PassportJsController],
   providers: [
     PassportJsService,
     UsersService,
@@ -29,7 +23,7 @@ import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
     GoogleStrategy,
     VkStrategy,
     FbStrategy,
-    JwtService
-  ]
+    JwtService,
+  ],
 })
 export class PassportJsModule {}

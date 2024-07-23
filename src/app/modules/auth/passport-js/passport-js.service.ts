@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
 import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { UserStatusEnum } from '@/app/modules/common/enums/user-status.enum';
-import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 import ClassicAuthGetTokenPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-get-token.payload.dto';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';

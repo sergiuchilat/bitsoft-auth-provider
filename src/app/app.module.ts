@@ -12,6 +12,7 @@ import { BlockedIpEntity } from '@/app/modules/blocked-ip/entities/blocked-ip.en
 import { ParseTokenMiddleware } from '@/app/middleware/middlewares/parse-token.middleware';
 import { ParseLocalizationMiddleware } from '@/app/middleware/middlewares/parse-localization.middleware';
 import { IpFilterMiddleware } from '@/app/middleware/middlewares/ip-filter.middleware';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { IpFilterMiddleware } from '@/app/middleware/middlewares/ip-filter.middl
     EventEmitterConfig,
     JwtModule,
     PassportModule.register({ session: true }),
-    TypeOrmModule.forFeature([UserEntity, BlockedIpEntity]),
+    TypeOrmModule.forFeature([UserEntity, BlockedIpEntity, AuthLogEntity]),
   ],
   providers: [SeedService],
 })
