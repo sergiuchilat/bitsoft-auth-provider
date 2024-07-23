@@ -36,7 +36,7 @@ import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
 import ClassicAuthUpdateEmailResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.response.dto';
 import ClassicAuthVerifyResetPasswordResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-reset-password.response.dto';
-import { AuthLogEntity } from '@/app/modules/common/entities/auth.log.entity';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 import { PassportJsService } from '@/app/modules/auth/passport-js/passport-js.service';
 import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
 

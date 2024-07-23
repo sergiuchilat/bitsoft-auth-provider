@@ -5,7 +5,6 @@ import { VkGuard } from '@/app/modules/auth/passport-js/guards/vk.guard';
 import { FbGuard } from '@/app/modules/auth/passport-js/guards/fb.guard';
 import { PassportJsService } from '@/app/modules/auth/passport-js/passport-js.service';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
-import requestIp from 'request-ip';
 import { Response, Request } from 'express';
 
 @Controller({
@@ -26,7 +25,7 @@ export class PassportJsController {
   @UseGuards(GoogleGuard)
   @ApiExcludeEndpoint()
   async handleGoogleComplete(@Req() req: Request, @Res() res: Response) {
-    const clientIp = requestIp.getClientIp(req);
+    const clientIp = req.headers['x-client-ip'] as string;
     const response = await this.passportJsService.login(req, OauthProvider.GOOGLE, clientIp);
     res.redirect(`${process.env.REDIRECT_AFTER_LOGIN}?code=${response.token_code}`);
   }
@@ -41,7 +40,7 @@ export class PassportJsController {
   @UseGuards(VkGuard)
   @ApiExcludeEndpoint()
   async handleVkComplete(@Req() req: Request, @Res() res: Response) {
-    const clientIp = requestIp.getClientIp(req);
+    const clientIp = req.headers['x-client-ip'] as string;
     const response = await this.passportJsService.login(req, OauthProvider.VK, clientIp);
     res.redirect(`${process.env.REDIRECT_AFTER_LOGIN}?code=${response.token_code}`);
   }
@@ -56,7 +55,7 @@ export class PassportJsController {
   @UseGuards(FbGuard)
   @ApiExcludeEndpoint()
   async handleFbComplete(@Req() req: Request, @Res() res: Response) {
-    const clientIp = requestIp.getClientIp(req);
+    const clientIp = req.headers['x-client-ip'] as string;
     const response = await this.passportJsService.login(req, OauthProvider.FACEBOOK, clientIp);
     res.redirect(`${process.env.REDIRECT_AFTER_LOGIN}?code=${response.token_code}`);
   }

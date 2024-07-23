@@ -1,48 +1,51 @@
 import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ClassicAuthEntity } from '@/app/modules/auth/classic-auth/classic-auth.entity';
 import { OauthCredentialEntity } from '@/app/modules/auth/passport-js/entities/oauth-credential.entity';
-import {UserStatusEnum} from '@/app/modules/common/enums/user-status.enum';
+import { UserStatusEnum } from '@/app/modules/common/enums/user-status.enum';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 
-@Entity ('users')
+@Entity('users')
 export class UserEntity {
-  @PrimaryGeneratedColumn ()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column ({
+  @Column({
     length: 36,
     nullable: false,
     unique: true,
   })
-    uuid: string;
+  uuid: string;
 
-  @Column ({
+  @Column({
     length: 255,
     nullable: true,
   })
-    name: string;
+  name: string;
 
-  @Column ({
+  @Column({
     length: 255,
     nullable: true,
   })
-    email: string;
+  email: string;
 
-
-    @Column({
-        nullable: false,
-        default: UserStatusEnum.NEW
-    })
-    status: UserStatusEnum;
+  @Column({
+    nullable: false,
+    default: UserStatusEnum.NEW,
+  })
+  status: UserStatusEnum;
 
   @Column({
     type: 'inet',
-    nullable: true
+    nullable: true,
   })
-    last_login_ip: string;
+  last_login_ip: string;
 
-  @OneToOne (() => ClassicAuthEntity, (classicAuth) => classicAuth.user)
-    classicAuth: ClassicAuthEntity;
+  @OneToOne(() => ClassicAuthEntity, (classicAuth) => classicAuth.user)
+  classicAuth: ClassicAuthEntity;
 
-  @OneToMany (() => OauthCredentialEntity, (oAuth) => oAuth.user)
-    oAuth: OauthCredentialEntity;
+  @OneToMany(() => OauthCredentialEntity, (oAuth) => oAuth.user)
+  oAuth: OauthCredentialEntity;
+
+  @OneToMany(() => AuthLogEntity, (log) => log.user)
+  log: AuthLogEntity;
 }

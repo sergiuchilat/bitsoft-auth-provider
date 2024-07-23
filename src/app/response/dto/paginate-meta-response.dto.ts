@@ -7,35 +7,35 @@ export default class PaginateMetaResponseDto {
     description: 'Total items count in database',
     type: Number,
   })
-    totalItems: number;
+  totalItems: number;
 
   @ApiProperty({
     example: 2,
     description: 'Total available items count on selected page',
     type: Number,
   })
-    itemCount: number;
+  itemCount: number;
 
   @ApiProperty({
     example: 5,
     description: 'Items per page',
     type: Number,
   })
-    itemsPerPage: number;
+  itemsPerPage: number;
 
   @ApiProperty({
     example: 2,
     description: 'Total pages count',
     type: Number,
   })
-    totalPages: number;
+  totalPages: number;
 
   @ApiProperty({
     example: 1,
     description: 'Current page',
     type: Number,
   })
-    currentPage: number;
+  currentPage: number;
 
   constructor(paginator: PaginatorConfigInterface, [entities, totalItems]: [unknown[], number]) {
     this.itemsPerPage = paginator.limit;
