@@ -10,6 +10,7 @@ export default interface AppConfigInterface {
     write_access_key: string;
   };
   cross_domain_token: number;
+  app_two_fa_connected: number;
   session: {
     secret: string;
   };

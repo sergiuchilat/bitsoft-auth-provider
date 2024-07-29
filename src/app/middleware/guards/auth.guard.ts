@@ -32,6 +32,18 @@ export class AuthGuard implements CanActivate {
       }
     }
 
+    const isTwoFaConnected = AppConfig.app.app_two_fa_connected === 1;
+
+    if (isTwoFaConnected) {
+      if (!user.isTwoFactorConfirmed) {
+        throw new UnauthorizedException(
+          this.i18nService.t('auth.errors.two_fa_required', {
+            lang: language,
+          }),
+        );
+      }
+    }
+
     return true;
   }
 

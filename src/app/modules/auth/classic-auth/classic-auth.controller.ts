@@ -23,6 +23,9 @@ import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth
 import { AuthGuard } from '@/app/middleware/guards/auth.guard';
 import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
 import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
+import ClassicAuthVerifyQrPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-qr.payload.dto';
+import { RequestUser } from '@/app/request/decorators/request-user.decorator';
+import RequestUserInterface from '@/app/request/interfaces/request-user.Interface';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -81,6 +84,28 @@ export class ClassicAuthController {
     response
       .status(HttpStatus.CREATED)
       .send(await this.classicAuthService.register(classicAuthRegisterPayloadDto, request.localization));
+  }
+
+  @ApiOperation({ summary: 'Generate qr' })
+  // @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @Post('generate-qr')
+  async generateQR(@Res() response: Response, @RequestUser() user: RequestUserInterface) {
+    response.status(HttpStatus.CREATED).send(await this.classicAuthService.generateQR(user));
+  }
+  @ApiOperation({ summary: 'Generate qr' })
+  // @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @Post('2fa')
+  async verifyQr(
+    @Res() response: Response,
+    @Body() classicAuthVerifyQrPayloadDto: ClassicAuthVerifyQrPayloadDto,
+    @RequestUser() user: RequestUserInterface,
+    @Req() req: Request,
+  ) {
+    response
+      .status(HttpStatus.CREATED)
+      .send(await this.classicAuthService.verifyQr(classicAuthVerifyQrPayloadDto, user, req.hostname));
   }
 
   @ApiOperation({ summary: 'Activate user account' })

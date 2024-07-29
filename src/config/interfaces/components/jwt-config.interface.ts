@@ -6,4 +6,5 @@ export default interface JwtConfigInterface {
   privateKey: string;
   publicKeyPath: string;
   publicKey: string;
+  twoFaSecret: string;
 }

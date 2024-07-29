@@ -34,6 +34,7 @@ export default class EnvConfigStrategy {
           secret: process.env.SESSION_SECRET,
         },
         cross_domain_token: Number(process.env.CROSS_DOMAIN_TOKEN),
+        app_two_fa_connected: Number(process.env.APP_TWO_FA_CONNECTED),
         log: {
           custom: process.env.APP_LOG_CUSTOM === 'true',
           levels: {
@@ -75,6 +76,7 @@ export default class EnvConfigStrategy {
       },
       jwt: {
         secret: process.env.JWT_SECRET_KEY,
+        twoFaSecret: process.env.JWT_PUBLIC_TWO_FA_SECRET,
         expiresIn: Number(process.env.JWT_TOKEN_EXPIRES_IN),
         refreshTokenExpiresIn: Number(process.env.JWT_REFRESH_TOKEN_EXPIRES_IN),
         publicKeyPath: process.env.JWT_PUBLIC_KEY_PATH,
