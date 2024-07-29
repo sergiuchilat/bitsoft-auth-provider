@@ -30,7 +30,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(ParseTokenMiddleware)
-      .exclude('(.*)login(.*)', '(.*)register(.*)', '(.*)oauth(.*)')
+      .exclude('(.*)login(.*)', '(.*)register(.*)', '(.*)oauth(.*)', '(.*)activate(.*)')
       .forRoutes('*');
     consumer.apply(ParseLocalizationMiddleware).forRoutes('*');
     consumer.apply(IpFilterMiddleware).forRoutes('*');
