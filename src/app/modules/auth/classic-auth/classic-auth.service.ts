@@ -292,7 +292,7 @@ export class ClassicAuthService {
           {
             email: existingClassicCredentials.user.email,
             name: existingClassicCredentials.user.name,
-            isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+            isActive: true,
           },
         ),
         {
