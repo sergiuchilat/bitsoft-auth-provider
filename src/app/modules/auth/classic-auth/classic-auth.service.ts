@@ -231,7 +231,6 @@ export class ClassicAuthService {
     const existingClassicCredentials = await this.classicAuthRepository.findOne({
       where: {
         activation_code: token,
-        status: AuthMethodStatus.NEW,
       },
       relations: ['user'],
     });
@@ -244,6 +243,16 @@ export class ClassicAuthService {
         HttpStatus.NOT_FOUND,
       );
     }
+
+    if (existingClassicCredentials.status === AuthMethodStatus.ACTIVE) {
+      throw new HttpException(
+        this.i18nService.t('auth.errors.account_already_active', {
+          lang: language,
+        }),
+        HttpStatus.CONFLICT,
+      );
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
