@@ -103,7 +103,11 @@ export class ClassicAuthService {
   }
 
   async generateQR(user: RequestUserInterface) {
-    if (user.isTwoFactorEnable) {
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (user?.isTwoFactorEnable) {
       throw new BadRequestException('Already QR generated');
     }
 
