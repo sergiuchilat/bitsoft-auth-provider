@@ -315,7 +315,7 @@ export class ClassicAuthService {
           lang: language,
         }),
       };
-      throw new HttpException(message, HttpStatus.CONFLICT);
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     } finally {
       await queryRunner.release();
     }
