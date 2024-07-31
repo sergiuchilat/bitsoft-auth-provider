@@ -196,6 +196,7 @@ export class ClassicAuthService {
         { email: user.email },
         {
           activation_code: activationCode,
+          created_at: new Date(),
         },
       );
 
@@ -236,7 +237,12 @@ export class ClassicAuthService {
     });
 
     if (!existingClassicCredentials) {
-      throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        this.i18nService.t('auth.errors.invalid_activation_link', {
+          lang: language,
+        }),
+        HttpStatus.NOT_FOUND,
+      );
     }
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
