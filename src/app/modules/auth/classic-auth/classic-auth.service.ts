@@ -164,7 +164,11 @@ export class ClassicAuthService {
     });
 
     if (!isValid) {
-      throw new UnauthorizedException('Invalid authentication code');
+      throw new UnauthorizedException(
+        this.i18nService.t('auth.errors.invalid_authentication_code', {
+          lang: language,
+        }),
+      );
     }
 
     await this.usersRepository.update(

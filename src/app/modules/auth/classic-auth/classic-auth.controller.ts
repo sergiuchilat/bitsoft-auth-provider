@@ -99,6 +99,7 @@ export class ClassicAuthController {
       .status(HttpStatus.CREATED)
       .send(await this.classicAuthService.toggleTwoFactor(user, req.localization));
   }
+
   @ApiOperation({ summary: 'Verify two factor' })
   @ApiBearerAuth()
   @Post('2fa')

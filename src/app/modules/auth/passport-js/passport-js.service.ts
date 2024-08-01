@@ -83,8 +83,8 @@ export class PassportJsService {
       relations: ['user'],
     });
   }
-  async findExistingCredentialsByEmailAndProvider(provider: OauthProvider, email: string) {
-    return await this.oauthCredentialRepository.findOne({
+  findExistingCredentialsByEmailAndProvider(provider: OauthProvider, email: string) {
+    return this.oauthCredentialRepository.findOne({
       where: {
         provider: provider,
         email: email,
@@ -93,8 +93,8 @@ export class PassportJsService {
     });
   }
 
-  private async updateTokenCode(id: string, tokenCode: string) {
-    await this.oauthCredentialRepository.update(id, {
+  private updateTokenCode(id: string, tokenCode: string) {
+    this.oauthCredentialRepository.update(id, {
       token_activation_code: tokenCode,
     });
   }

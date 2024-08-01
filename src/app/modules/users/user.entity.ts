@@ -47,6 +47,7 @@ export class UserEntity {
   @Column({
     type: 'varchar',
     nullable: true,
+    length: '200',
   })
   two_fa_secret: string;
 
