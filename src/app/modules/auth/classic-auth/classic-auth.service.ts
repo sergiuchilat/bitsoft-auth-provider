@@ -293,6 +293,7 @@ export class ClassicAuthService {
         { email: user.email },
         {
           activation_code: activationCode,
+          created_at: new Date(),
         },
       );
 
@@ -327,13 +328,26 @@ export class ClassicAuthService {
     const existingClassicCredentials = await this.classicAuthRepository.findOne({
       where: {
         activation_code: token,
-        status: AuthMethodStatus.NEW,
       },
       relations: ['user'],
     });
 
     if (!existingClassicCredentials) {
-      throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        this.i18nService.t('auth.errors.invalid_activation_link', {
+          lang: language,
+        }),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (existingClassicCredentials.status === AuthMethodStatus.ACTIVE) {
+      throw new HttpException(
+        this.i18nService.t('auth.errors.account_already_active', {
+          lang: language,
+        }),
+        HttpStatus.CONFLICT,
+      );
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -375,7 +389,7 @@ export class ClassicAuthService {
           {
             email: existingClassicCredentials.user.email,
             name: existingClassicCredentials.user.name,
-            isActive: existingClassicCredentials.status === AuthMethodStatus.ACTIVE,
+            isActive: true,
           },
         ),
         {
@@ -398,7 +412,7 @@ export class ClassicAuthService {
           lang: language,
         }),
       };
-      throw new HttpException(message, HttpStatus.CONFLICT);
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     } finally {
       await queryRunner.release();
     }
