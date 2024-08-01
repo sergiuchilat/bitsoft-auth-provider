@@ -100,7 +100,6 @@ export class ClassicAuthController {
       .send(await this.classicAuthService.toggleTwoFactor(user, req.localization));
   }
   @ApiOperation({ summary: 'Verify two factor' })
-  // @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @Post('2fa')
   async verifyQr(
