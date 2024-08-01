@@ -28,7 +28,6 @@ export class ParseTokenMiddleware implements NestMiddleware {
         next();
         return;
       }
-
       const parsedToken = await this.jwtService.verify(token, {
         algorithms: ['RS256'],
         publicKey: AppConfig.jwt.publicKey,
@@ -37,6 +36,10 @@ export class ParseTokenMiddleware implements NestMiddleware {
       req.user = {
         uuid: parsedToken.sub,
         domain: parsedToken.props?.domain,
+        email: parsedToken.props?.email,
+        authProvider: parsedToken.props.authProvider,
+        isTwoFactorConfirmed: parsedToken.props?.isTwoFactorConfirmed,
+        isTwoFactorEnable: parsedToken.props?.isTwoFactorEnable,
       };
 
       next();
@@ -65,6 +68,7 @@ export class ParseTokenMiddleware implements NestMiddleware {
 
   private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
+
     return type === 'Bearer' ? token : undefined;
   }
 }

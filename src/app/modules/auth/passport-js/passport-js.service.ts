@@ -14,6 +14,7 @@ import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 import ClassicAuthGetTokenPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-get-token.payload.dto';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
+import { UsersRepository } from '@/app/modules/users/users.repository';
 
 @Injectable()
 export class PassportJsService {
@@ -23,6 +24,7 @@ export class PassportJsService {
     @InjectRepository(AuthLogEntity)
     private readonly authLogRepository: Repository<AuthLogEntity>,
     private readonly usersService: UsersService,
+    private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
     private readonly i18nService: I18nService,
   ) {}
@@ -42,6 +44,10 @@ export class PassportJsService {
 
     if (existingCredentials?.id) {
       await this.updateTokenCode(existingCredentials.id, tokenCode);
+      await this.usersRepository.update(
+        { uuid: existingCredentials.user.uuid },
+        { is_two_factor_confirmed: false },
+      );
 
       return {
         token_code: tokenCode,
@@ -73,6 +79,15 @@ export class PassportJsService {
       where: {
         provider: provider,
         provider_user_id: providerUserId,
+      },
+      relations: ['user'],
+    });
+  }
+  findExistingCredentialsByEmailAndProvider(provider: OauthProvider, email: string) {
+    return this.oauthCredentialRepository.findOne({
+      where: {
+        provider: provider,
+        email: email,
       },
       relations: ['user'],
     });
@@ -123,6 +138,8 @@ export class PassportJsService {
           name: existingCredentials.user.name,
           photo: existingCredentials.photo,
           domain: hostname,
+          isTwoFactorConfirmed: existingCredentials.user.is_two_factor_confirmed,
+          isTwoFactorEnable: existingCredentials.user.is_two_factor_enable,
         },
       ),
       {

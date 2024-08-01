@@ -1,13 +1,8 @@
 import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 
 export class TokenGeneratorService {
-  static generatePayload (
-    type: TokenType,
-    sub: string,
-    authProvider: string,
-    user: any
-  ): any{
-    return  {
+  static generatePayload(type: TokenType, sub: string, authProvider: string, user: any): any {
+    return {
       props: {
         authProvider,
         type,
@@ -15,9 +10,11 @@ export class TokenGeneratorService {
         name: user.name,
         photo: user.photo,
         isActive: user.isActive,
-        domain: user.domain
+        domain: user.domain,
+        isTwoFactorConfirmed: user.isTwoFactorConfirmed,
+        isTwoFactorEnable: user.isTwoFactorEnable,
       },
-      sub
+      sub,
     };
   }
 }
