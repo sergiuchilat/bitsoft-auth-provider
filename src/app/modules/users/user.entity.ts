@@ -35,6 +35,22 @@ export class UserEntity {
   status: UserStatusEnum;
 
   @Column({
+    default: false,
+  })
+  is_two_factor_enable: boolean;
+
+  @Column({
+    default: false,
+  })
+  is_two_factor_confirmed: boolean;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  two_fa_secret: string;
+
+  @Column({
     type: 'inet',
     nullable: true,
   })

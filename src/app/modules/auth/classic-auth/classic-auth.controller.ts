@@ -86,14 +86,20 @@ export class ClassicAuthController {
       .send(await this.classicAuthService.register(classicAuthRegisterPayloadDto, request.localization));
   }
 
-  @ApiOperation({ summary: 'Generate qr' })
-  // @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Connect two factor' })
+  @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @Post('generate-qr')
-  async generateQR(@Res() response: Response, @RequestUser() user: RequestUserInterface) {
-    response.status(HttpStatus.CREATED).send(await this.classicAuthService.generateQR(user));
+  @Post('connect-two-factor')
+  async generateQR(
+    @Res() response: Response,
+    @RequestUser() user: RequestUserInterface,
+    @Req() req: Request,
+  ) {
+    response
+      .status(HttpStatus.CREATED)
+      .send(await this.classicAuthService.toggleTwoFactor(user, req.localization));
   }
-  @ApiOperation({ summary: 'Generate qr' })
+  @ApiOperation({ summary: 'Verify two factor' })
   // @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @Post('2fa')
@@ -105,7 +111,14 @@ export class ClassicAuthController {
   ) {
     response
       .status(HttpStatus.CREATED)
-      .send(await this.classicAuthService.verifyQr(classicAuthVerifyQrPayloadDto, user, req.hostname));
+      .send(
+        await this.classicAuthService.verifyQr(
+          classicAuthVerifyQrPayloadDto,
+          user,
+          req.hostname,
+          req.localization,
+        ),
+      );
   }
 
   @ApiOperation({ summary: 'Activate user account' })

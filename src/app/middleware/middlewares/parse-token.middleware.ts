@@ -37,6 +37,7 @@ export class ParseTokenMiddleware implements NestMiddleware {
         uuid: parsedToken.sub,
         domain: parsedToken.props?.domain,
         email: parsedToken.props?.email,
+        authProvider: parsedToken.props.authProvider,
         isTwoFactorConfirmed: parsedToken.props?.isTwoFactorConfirmed,
         isTwoFactorEnable: parsedToken.props?.isTwoFactorEnable,
       };

@@ -6,66 +6,65 @@ import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
   name: 'credentials_oauth',
 })
 @Unique('oauth_provider_user_id', ['provider', 'provider_user_id'])
-
 export class OauthCredentialEntity {
   @PrimaryGeneratedColumn()
-    id: string;
+  id: string;
 
-  @Column ({
+  @Column({
     length: 255,
     nullable: true,
   })
-    email: string;
+  email: string;
 
   @Column({
     length: 2048,
     nullable: true,
   })
-    photo: string;
+  photo: string;
 
   @Column({
     nullable: false,
   })
-    user_id: number;
+  user_id: number;
 
   @ManyToOne(() => UserEntity, (user) => user.id)
   @JoinColumn({
     name: 'user_id',
-    referencedColumnName: 'id'
+    referencedColumnName: 'id',
   })
-    user: UserEntity;
+  user: UserEntity;
 
   @Column({
     type: 'enum',
     enum: OauthProvider,
     nullable: false,
   })
-    provider: OauthProvider;
+  provider: OauthProvider;
 
   @Column({
     length: 255,
     nullable: false,
   })
-    provider_user_id: string;
+  provider_user_id: string;
 
   @Column({
     length: 36,
     nullable: true,
   })
-    token_activation_code: string;
+  token_activation_code: string;
 
   @Column({
     length: 4096,
     nullable: true,
   })
-    token: string;
+  token: string;
 
   @Column({
     nullable: false,
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
   })
-    token_valid_until: Date;
+  token_valid_until: Date;
 
   createdAt: Date;
   updatedAt: Date;

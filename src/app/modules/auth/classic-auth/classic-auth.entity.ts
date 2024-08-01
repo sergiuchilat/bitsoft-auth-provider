@@ -39,16 +39,6 @@ export class ClassicAuthEntity {
   activation_code: string;
 
   @Column({
-    default: false,
-  })
-  is_two_factor_enable: boolean;
-
-  @Column({
-    default: false,
-  })
-  is_two_factor_confirmed: boolean;
-
-  @Column({
     nullable: true,
     length: 36,
   })

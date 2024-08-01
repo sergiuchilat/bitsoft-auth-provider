@@ -43,6 +43,7 @@ import * as qrcode from 'qrcode';
 import { authenticator } from 'otplib';
 import ClassicAuthVerifyQrPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-qr.payload.dto';
 import RequestUserInterface from '@/app/request/interfaces/request-user.Interface';
+import { UsersRepository } from '@/app/modules/users/users.repository';
 
 dayjs.extend(utc);
 
@@ -55,6 +56,7 @@ export class ClassicAuthService {
     @InjectRepository(AuthLogEntity)
     private readonly authLogRepository: Repository<AuthLogEntity>,
     private readonly usersService: UsersService,
+    private readonly usersRepository: UsersRepository,
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
@@ -85,13 +87,23 @@ export class ClassicAuthService {
     const passwordMatch = await compare(classicAuthLoginPayloadDto.password, existingUser?.password || '');
 
     if (existingUser && passwordMatch && existingUser.status !== AuthMethodStatus.BLOCKED) {
-      await this.classicAuthRepository.update(
-        { email: classicAuthLoginPayloadDto.email },
+      await this.usersRepository.update(
+        { uuid: existingUser.user.uuid },
         {
           is_two_factor_confirmed: false,
         },
       );
-      return this.generateToken(existingUser, hostname);
+
+      return this.generateToken(
+        {
+          ...existingUser,
+          user: {
+            ...existingUser.user,
+            is_two_factor_confirmed: false,
+          },
+        },
+        hostname,
+      );
     }
 
     throw new HttpException(
@@ -102,16 +114,36 @@ export class ClassicAuthService {
     );
   }
 
-  async generateQR(user: RequestUserInterface) {
+  async toggleTwoFactor(user: RequestUserInterface, language: Language) {
     if (!user) {
       throw new UnauthorizedException();
     }
 
     if (user?.isTwoFactorEnable) {
-      throw new BadRequestException('Already QR generated');
+      await this.usersRepository.update(
+        { uuid: user.uuid },
+        {
+          two_fa_secret: null,
+          is_two_factor_enable: false,
+          is_two_factor_confirmed: false,
+        },
+      );
+
+      return {
+        message: this.i18nService.t('auth.success.two_factor_turned_off', {
+          lang: language,
+        }),
+      };
     }
 
-    const otpAuthUrl = authenticator.keyuri(user.email, process.env.PROJECT_NAME, AppConfig.jwt.twoFaSecret);
+    const secret = authenticator.generateSecret();
+    const otpAuthUrl = authenticator.keyuri(user.email, process.env.PROJECT_NAME, secret);
+    await this.usersRepository.update(
+      { uuid: user.uuid },
+      {
+        two_fa_secret: secret,
+      },
+    );
 
     return qrcode.toDataURL(otpAuthUrl);
   }
@@ -120,9 +152,14 @@ export class ClassicAuthService {
     classicAuthVerifyQrPayloadDto: ClassicAuthVerifyQrPayloadDto,
     user: RequestUserInterface,
     hostname: string,
+    language: Language,
   ) {
+    const existingUser = await this.usersRepository.findOne({
+      where: { uuid: user.uuid },
+      select: ['two_fa_secret'],
+    });
     const isValid = authenticator.verify({
-      secret: AppConfig.jwt.twoFaSecret,
+      secret: existingUser.two_fa_secret,
       token: classicAuthVerifyQrPayloadDto.code,
     });
 
@@ -130,17 +167,26 @@ export class ClassicAuthService {
       throw new UnauthorizedException('Invalid authentication code');
     }
 
-    await this.classicAuthRepository.update(
-      { email: user.email },
+    await this.usersRepository.update(
+      { uuid: user.uuid },
       {
         is_two_factor_enable: true,
         is_two_factor_confirmed: true,
       },
     );
 
-    const existingUser = await this.classicAuthRepository.findOneByEmail(user.email);
+    if (user.authProvider === OauthProvider.CLASSIC) {
+      const existingUser = await this.classicAuthRepository.findOneByEmail(user.email);
 
-    return this.generateToken(existingUser, hostname);
+      return this.generateToken(existingUser, hostname);
+    }
+
+    const existingOAuthUser = await this.passportJsService.findExistingCredentialsByEmailAndProvider(
+      user.authProvider,
+      user.email,
+    );
+
+    return this.passportJsService.generateToken(existingOAuthUser, hostname, language);
   }
 
   async register(classicAuthRegisterPayloadDto: ClassicAuthRegisterPayloadDto, language: Language) {
@@ -505,8 +551,8 @@ export class ClassicAuthService {
             name: existingUser.user.name,
             isActive: existingUser.status === AuthMethodStatus.ACTIVE,
             domain: hostname,
-            isTwoFactorConfirmed: existingUser.is_two_factor_confirmed,
-            isTwoFactorEnable: existingUser.is_two_factor_enable,
+            isTwoFactorConfirmed: existingUser.user.is_two_factor_confirmed,
+            isTwoFactorEnable: existingUser.user.is_two_factor_enable,
           },
         ),
         {
