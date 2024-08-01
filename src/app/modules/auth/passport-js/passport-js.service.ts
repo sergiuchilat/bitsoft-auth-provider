@@ -93,8 +93,8 @@ export class PassportJsService {
     });
   }
 
-  private updateTokenCode(id: string, tokenCode: string) {
-    this.oauthCredentialRepository.update(id, {
+  private async updateTokenCode(id: string, tokenCode: string) {
+    await this.oauthCredentialRepository.update(id, {
       token_activation_code: tokenCode,
     });
   }
