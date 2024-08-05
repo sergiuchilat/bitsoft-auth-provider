@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Confirm Your {PROJECT_NAME} Account</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<table style='width: 100%; max-width: 800px; margin: 10px auto; background-color: #f6fbff; border: 2px solid grey; border-radius: 5px; padding: 20px; text-align: center; font-size: 14px'>
+    <tr>
+        <td>
+            <img style="width: 100px; border-radius: 10px" src="{LOGO_URL}" alt="logo"/><br><br>
+            <span style="font-size: 24px; color: darkblue">Hello, <strong>{USER_FULL_NAME},</strong></span><br><br>
+            Thank you for registering on <a href="{PROJECT_URL}" target="_blank">{PROJECT_NAME}</a>!<br><br>
+            <span style="font-size: 20px; color: darkblue">Your password: <strong>{PASSWORD}</strong></span><br><br>
+            Click the button below to get started and confirm your email address.<br>
+            <a
+                    href="{CONFIRM_LINK}"
+                    style="width: 200px; text-align: center; border-radius: 7px; margin: 20px auto; font-family: Arial, Helvetica, sans-serif; font-size: 18px; line-height: 24px; text-decoration: none; padding: 13px; display: block; background-color: #1155cc;"
+                    target="_blank"
+            >
+                <span style="color: #ffffff">Confirm</span>
+            </a>
+
+            After confirmation, you'll have full access to your account and all its features.<br>
+            If you didn't sign up for <a href="{PROJECT_URL}" target="_blank">{PROJECT_NAME}</a>,
+            please disregard this email.<br><br>
+
+            If you have any questions, we're always here to help!<br><br>
+
+            Best regards, <a href="{PROJECT_URL}" target="_blank">{PROJECT_NAME}</a>!
+        </td>
+    </tr>
+</table>
+</body>
+</html>
