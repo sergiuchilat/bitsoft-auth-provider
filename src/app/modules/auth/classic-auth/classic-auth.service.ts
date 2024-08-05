@@ -44,6 +44,8 @@ import { authenticator } from 'otplib';
 import ClassicAuthVerifyQrPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-qr.payload.dto';
 import RequestUserInterface from '@/app/request/interfaces/request-user.Interface';
 import { UsersRepository } from '@/app/modules/users/users.repository';
+import ClassicAuthRegisterWithoutPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-register-without-password.payload.dto';
+import randomstring from 'randomstring';
 
 dayjs.extend(utc);
 
@@ -64,6 +66,32 @@ export class ClassicAuthService {
     private readonly passportJsService: PassportJsService,
   ) {
     this.codeExpiresIn = AppConfig.authProviders.classic.code_expires_in;
+  }
+
+  private generatePassword(length = 12): string {
+    const upperCase = randomstring.generate({
+      length: Math.floor(length / 4),
+      charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    });
+    const lowerCase = randomstring.generate({
+      length: Math.floor(length / 4),
+      charset: 'abcdefghijklmnopqrstuvwxyz',
+    });
+    const digits = randomstring.generate({ length: Math.floor(length / 4), charset: '0123456789' });
+    const symbols = randomstring.generate({
+      length: length - 3 * Math.floor(length / 4),
+      charset: '!@#$%^&*()_+{}:"<>?`~[];,./\\',
+    });
+
+    const password = upperCase + lowerCase + digits + symbols;
+    return this.shuffle(password);
+  }
+
+  private shuffle(text: string): string {
+    return text
+      .split('')
+      .sort(() => 0.5 - Math.random())
+      .join('');
   }
 
   async login(
@@ -235,6 +263,62 @@ export class ClassicAuthService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.log('Error registering user', error);
+
+      throw new HttpException(
+        this.i18nService.t('auth.errors.error_registering', {
+          lang: language,
+        }),
+        HttpStatus.CONFLICT,
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  async registerV2(
+    classicAuthRegisterWithoutPasswordPayloadDto: ClassicAuthRegisterWithoutPasswordPayloadDto,
+    language: Language,
+  ) {
+    const activationCode = v4();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      let existingUser = await this.usersService.findExistingUser(
+        classicAuthRegisterWithoutPasswordPayloadDto.email,
+        OauthProvider.CLASSIC,
+      );
+
+      if (!existingUser) {
+        existingUser = await queryRunner.manager.save(UserEntity, {
+          email: classicAuthRegisterWithoutPasswordPayloadDto.email,
+          name: classicAuthRegisterWithoutPasswordPayloadDto.name,
+          uuid: v4(),
+        });
+      }
+
+      const password = this.generatePassword();
+
+      const registeredClassicCredentials = await queryRunner.manager.save(ClassicAuthEntity, {
+        ...classicAuthRegisterWithoutPasswordPayloadDto,
+        activation_code: activationCode,
+        status: AuthMethodStatus.NEW,
+        name: classicAuthRegisterWithoutPasswordPayloadDto.name,
+        password: await hash(password, 10),
+        user_id: existingUser.id,
+      });
+
+      await this.mailerService.sendActivationEmailV2(
+        classicAuthRegisterWithoutPasswordPayloadDto.email,
+        this.generateActivationLink(activationCode),
+        password,
+        classicAuthRegisterWithoutPasswordPayloadDto.name,
+        language,
+      );
+      await queryRunner.commitTransaction();
+
+      return plainToInstance(ClassicAuthRegisterResponseDto, registeredClassicCredentials);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
 
       throw new HttpException(
         this.i18nService.t('auth.errors.error_registering', {

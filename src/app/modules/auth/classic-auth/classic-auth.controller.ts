@@ -26,6 +26,7 @@ import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-au
 import ClassicAuthVerifyQrPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-qr.payload.dto';
 import { RequestUser } from '@/app/request/decorators/request-user.decorator';
 import RequestUserInterface from '@/app/request/interfaces/request-user.Interface';
+import ClassicAuthRegisterWithoutPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-register-without-password.payload.dto';
 
 @ApiTags('Auth: Classic')
 @Controller({
@@ -84,6 +85,23 @@ export class ClassicAuthController {
     response
       .status(HttpStatus.CREATED)
       .send(await this.classicAuthService.register(classicAuthRegisterPayloadDto, request.localization));
+  }
+
+  @ApiOperation({ summary: 'User registration with email' })
+  @Post('register-v2')
+  async registerV2(
+    @Body() classicAuthRegisterWithoutPasswordPayloadDto: ClassicAuthRegisterWithoutPasswordPayloadDto,
+    @Res() response: Response,
+    @Req() request: Request,
+  ) {
+    response
+      .status(HttpStatus.CREATED)
+      .send(
+        await this.classicAuthService.registerV2(
+          classicAuthRegisterWithoutPasswordPayloadDto,
+          request.localization,
+        ),
+      );
   }
 
   @ApiOperation({ summary: 'Connect two factor' })

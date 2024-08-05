@@ -29,6 +29,30 @@ export class MailerService {
     return this.sendNotificationOnEmail(email, emailBody);
   }
 
+  public sendActivationEmailV2(
+    email: string,
+    activationLink: string,
+    password = '',
+    name = '',
+    language: Language,
+  ) {
+    const notifyServiceTemplate = 'registration-confirmation-v2';
+    const templateData = fs.readFileSync(
+      `src/data/email-templates/${notifyServiceTemplate}/${language || 'en'}.html`,
+      'utf8',
+    );
+
+    const emailBody = templateData
+      .replaceAll('{PROJECT_NAME}', process.env.PROJECT_NAME)
+      .replaceAll('{LOGO_URL}', process.env.PROJECT_LOGO_URL)
+      .replaceAll('{USER_FULL_NAME}', name)
+      .replaceAll('{PASSWORD}', password)
+      .replaceAll('{CONFIRM_LINK}', activationLink)
+      .replaceAll('{PROJECT_URL}', process.env.PROJECT_URL);
+
+    return this.sendNotificationOnEmail(email, emailBody);
+  }
+
   public sendResetPasswordEmail(email: string, name = '', resetPasswordLink: string) {
     const notifyServiceTemplate = 'password-reset';
     const templateData = fs.readFileSync(`src/data/email-templates/${notifyServiceTemplate}/en.html`, 'utf8');
