@@ -250,12 +250,23 @@ export class ClassicAuthService {
         user_id: existingUser.id,
       });
 
-      await this.mailerService.sendActivationEmail(
-        classicAuthRegisterPayloadDto.email,
-        this.generateActivationLink(activationCode),
-        classicAuthRegisterPayloadDto.name,
-        language,
-      );
+      if (classicAuthRegisterPayloadDto.send_password_on_email) {
+        await this.mailerService.sendActivationEmailV2(
+          classicAuthRegisterPayloadDto.email,
+          this.generateActivationLink(activationCode),
+          classicAuthRegisterPayloadDto.password,
+          classicAuthRegisterPayloadDto.name,
+          language,
+        );
+      } else {
+        await this.mailerService.sendActivationEmail(
+          classicAuthRegisterPayloadDto.email,
+          this.generateActivationLink(activationCode),
+          classicAuthRegisterPayloadDto.name,
+          language,
+        );
+      }
+
       await queryRunner.commitTransaction();
       console.log('registeredClassicCredentials', registeredClassicCredentials);
 
