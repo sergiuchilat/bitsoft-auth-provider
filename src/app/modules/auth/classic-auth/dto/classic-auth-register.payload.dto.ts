@@ -1,23 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, Length } from 'class-validator';
+import { IsBoolean, IsOptional, Length } from 'class-validator';
 
 export default class ClassicAuthRegisterPayloadDto {
-  @ApiProperty ({ example: 'mail@domain.com', description: 'Email' })
-  @Length (6, 255, {
+  @ApiProperty({ example: 'mail@domain.com', description: 'Email' })
+  @Length(6, 255, {
     message: 'Email must contain from $constraint1 to $constraint2 characters',
   })
-    email: string;
+  email: string;
 
-  @ApiProperty ({ example: 'strong_password', description: 'Password' })
-  @Length (8, 255, {
+  @ApiProperty({ example: 'strong_password', description: 'Password' })
+  @Length(8, 255, {
     message: 'Password must contain from $constraint1 to $constraint2 characters',
   })
-    password: string;
+  password: string;
 
-  @ApiProperty ({ example: 'John Doe', description: 'Name' })
-  @Length (1, 255, {
+  @ApiProperty({ example: 'John Doe', description: 'Name' })
+  @Length(1, 255, {
     message: 'Name must contain from $constraint1 to $constraint2 characters',
   })
   @IsOptional()
-    name?: string;
+  name?: string;
+
+  @ApiProperty({ example: false, description: 'Send password on email', default: false })
+  @IsBoolean()
+  @IsOptional()
+  send_password_on_email?: boolean;
 }
