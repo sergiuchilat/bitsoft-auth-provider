@@ -1,9 +1,21 @@
-import { Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/app/modules/users/users.service';
 import { Response, Request } from 'express';
 import { UserPaginatorDto } from '@/app/modules/users/dto/user-paginator.dto';
-import { AuthGuard } from '@/app/middleware/guards/auth.guard';
+import { UserChangeRolePayloadDto } from '@/app/modules/users/dto/user-change-role.payload.dto';
 
 @ApiTags('Users')
 @Controller({
@@ -29,6 +41,16 @@ export class UsersController {
   @Patch('block/:uuid')
   async block(@Res() response: Response, @Param('uuid') uuid: string) {
     response.status(HttpStatus.OK).send(await this.usersService.block(uuid));
+  }
+
+  @ApiOperation({ summary: 'Change user role' })
+  @Patch('change-role/:uuid')
+  async changeRole(
+    @Res() response: Response,
+    @Param('uuid') uuid: string,
+    @Body() userChangeRolePayloadDto: UserChangeRolePayloadDto,
+  ) {
+    response.status(HttpStatus.OK).send(await this.usersService.changeRole(uuid, userChangeRolePayloadDto));
   }
 
   @ApiOperation({ summary: 'Unblock user' })

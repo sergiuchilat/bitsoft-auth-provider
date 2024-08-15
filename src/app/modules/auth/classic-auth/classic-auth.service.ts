@@ -489,6 +489,7 @@ export class ClassicAuthService {
             email: existingClassicCredentials.user.email,
             name: existingClassicCredentials.user.name,
             isActive: true,
+            role: existingClassicCredentials.user.role,
           },
         ),
         {
@@ -666,6 +667,7 @@ export class ClassicAuthService {
             domain: hostname,
             isTwoFactorConfirmed: existingUser.user.is_two_factor_confirmed,
             isTwoFactorEnable: existingUser.user.is_two_factor_enable,
+            role: existingUser.user.role,
           },
         ),
         {
