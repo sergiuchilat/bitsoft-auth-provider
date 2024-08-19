@@ -22,7 +22,7 @@ export class MailerService {
     const emailBody = templateData
       .replaceAll('{PROJECT_NAME}', process.env.PROJECT_NAME)
       .replaceAll('{LOGO_URL}', process.env.PROJECT_LOGO_URL)
-      .replaceAll('{USER_FULL_NAME}', name)
+      .replaceAll('{USER_FULL_NAME}', name?.trim())
       .replaceAll('{CONFIRM_LINK}', activationLink)
       .replaceAll('{PROJECT_URL}', process.env.PROJECT_URL);
 
@@ -45,7 +45,7 @@ export class MailerService {
     const emailBody = templateData
       .replaceAll('{PROJECT_NAME}', process.env.PROJECT_NAME)
       .replaceAll('{LOGO_URL}', process.env.PROJECT_LOGO_URL)
-      .replaceAll('{USER_FULL_NAME}', name)
+      .replaceAll('{USER_FULL_NAME}', name?.trim())
       .replaceAll('{PASSWORD}', password)
       .replaceAll('{CONFIRM_LINK}', activationLink)
       .replaceAll('{PROJECT_URL}', process.env.PROJECT_URL);
