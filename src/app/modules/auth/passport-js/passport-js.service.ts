@@ -165,9 +165,9 @@ export class PassportJsService {
 
   private async getUser(user: any, provider: OauthProvider) {
     let existingUser = await this.usersService.findExistingUser(user.email, provider);
-
     if (!existingUser) {
-      existingUser = await this.usersService.create(user.email, `${user.firstName} ${user.lastName}`);
+      const name = user.name ? user.name : `${user.firstName} ${user.lastName}`;
+      existingUser = await this.usersService.create(user.email, name);
     }
 
     return existingUser;
