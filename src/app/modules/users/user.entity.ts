@@ -3,6 +3,7 @@ import { ClassicAuthEntity } from '@/app/modules/auth/classic-auth/classic-auth.
 import { OauthCredentialEntity } from '@/app/modules/auth/passport-js/entities/oauth-credential.entity';
 import { UserStatusEnum } from '@/app/modules/common/enums/user-status.enum';
 import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
+import { UserRoleEnum } from '@/app/modules/users/enums/user-role.enum';
 
 @Entity('users')
 export class UserEntity {
@@ -27,6 +28,13 @@ export class UserEntity {
     nullable: true,
   })
   email: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserRoleEnum,
+    default: UserRoleEnum.PUBLIC_USER,
+  })
+  role: UserRoleEnum;
 
   @Column({
     nullable: false,

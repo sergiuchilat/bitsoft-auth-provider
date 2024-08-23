@@ -13,6 +13,8 @@ export class TokenGeneratorService {
         domain: user.domain,
         isTwoFactorConfirmed: user.isTwoFactorConfirmed,
         isTwoFactorEnable: user.isTwoFactorEnable,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
       },
       sub,
     };

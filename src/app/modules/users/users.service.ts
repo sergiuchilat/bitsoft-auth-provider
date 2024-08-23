@@ -9,6 +9,7 @@ import { EntityManager } from 'typeorm';
 import { PaginateResponseDto } from '@/app/response/dto/paginate-response.dto';
 import { UserPaginatorDto } from '@/app/modules/users/dto/user-paginator.dto';
 import { Language } from '@/app/enum/language.enum';
+import { UserChangeRolePayloadDto } from '@/app/modules/users/dto/user-change-role.payload.dto';
 
 @Injectable()
 export class UsersService {
@@ -27,6 +28,16 @@ export class UsersService {
 
   async block(uuid: string) {
     const result = await this.usersRepository.block(uuid);
+
+    if (!result.affected) {
+      throw new HttpException(`User with uuid: ${uuid} not found`, HttpStatus.NOT_FOUND);
+    }
+
+    return result;
+  }
+
+  async changeRole(uuid: string, userChangeRolePayloadDto: UserChangeRolePayloadDto) {
+    const result = await this.usersRepository.update({ uuid }, userChangeRolePayloadDto);
 
     if (!result.affected) {
       throw new HttpException(`User with uuid: ${uuid} not found`, HttpStatus.NOT_FOUND);

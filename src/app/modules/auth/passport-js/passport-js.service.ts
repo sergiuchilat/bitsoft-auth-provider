@@ -140,6 +140,8 @@ export class PassportJsService {
           domain: hostname,
           isTwoFactorConfirmed: existingCredentials.user.is_two_factor_confirmed,
           isTwoFactorEnable: existingCredentials.user.is_two_factor_enable,
+          role: existingCredentials.user.role,
+          avatarUrl: existingCredentials.photo,
         },
       ),
       {
