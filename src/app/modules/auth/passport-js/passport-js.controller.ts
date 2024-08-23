@@ -32,7 +32,7 @@ export class PassportJsController {
   }
 
   @Post('google/complete/mobile')
-  // @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async handleGoogleCompleteMobile(
     @Body() passportGoogleMobileLoginPayloadDto: PassportGoogleMobileLoginPayloadDto,
     @Res() response: Response,
