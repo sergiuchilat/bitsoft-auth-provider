@@ -11,9 +11,16 @@ import { UserEntity } from '@/app/modules/users/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UsersRepository } from '@/app/modules/users/users.repository';
 import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OauthCredentialEntity, UserEntity, AuthLogEntity])],
+  imports: [
+    TypeOrmModule.forFeature([OauthCredentialEntity, UserEntity, AuthLogEntity]),
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
+    }),
+  ],
   exports: [PassportJsService],
   controllers: [PassportJsController],
   providers: [

@@ -55,6 +55,7 @@ export default class EnvConfigStrategy {
         google: {
           clientId: process.env.GOOGLE_AUTH_CLIENT_ID,
           clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET,
+          userInfoUrl: process.env.GOOGLE_AUTH_USER_INFO,
           redirectURL: process.env.GOOGLE_AUTH_REDIRECT_URL,
         },
         vk: {
