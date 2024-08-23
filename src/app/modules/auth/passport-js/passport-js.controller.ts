@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { GoogleGuard } from '@/app/modules/auth/passport-js/guards/google.guard';
 import { VkGuard } from '@/app/modules/auth/passport-js/guards/vk.guard';
@@ -6,6 +6,7 @@ import { FbGuard } from '@/app/modules/auth/passport-js/guards/fb.guard';
 import { PassportJsService } from '@/app/modules/auth/passport-js/passport-js.service';
 import { OauthProvider } from '@/app/modules/common/enums/provider.enum';
 import { Response, Request } from 'express';
+import PassportGoogleMobileLoginPayloadDto from '@/app/modules/auth/passport-js/dto/passport-google-mobile-login.payload.dto';
 
 @Controller({
   version: '1',
@@ -28,6 +29,25 @@ export class PassportJsController {
     const clientIp = req.headers['x-client-ip'] as string;
     const response = await this.passportJsService.login(req, OauthProvider.GOOGLE, clientIp);
     res.redirect(`${process.env.REDIRECT_AFTER_LOGIN}?code=${response.token_code}`);
+  }
+
+  @Post('google/complete/mobile')
+  @ApiExcludeEndpoint()
+  async handleGoogleCompleteMobile(
+    @Body() passportGoogleMobileLoginPayloadDto: PassportGoogleMobileLoginPayloadDto,
+    @Res() response: Response,
+    @Req() request: Request,
+  ) {
+    response
+      .status(HttpStatus.OK)
+      .send(
+        await this.passportJsService.loginMobile(
+          passportGoogleMobileLoginPayloadDto,
+          OauthProvider.GOOGLE,
+          request.hostname,
+          request.localization,
+        ),
+      );
   }
 
   @Get('vk')

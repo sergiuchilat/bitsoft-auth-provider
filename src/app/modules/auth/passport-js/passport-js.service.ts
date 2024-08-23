@@ -15,6 +15,9 @@ import ClassicAuthGetTokenPayloadDto from '@/app/modules/auth/classic-auth/dto/c
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
 import { UsersRepository } from '@/app/modules/users/users.repository';
+import PassportGoogleMobileLoginPayloadDto from '@/app/modules/auth/passport-js/dto/passport-google-mobile-login.payload.dto';
+import { HttpService } from '@nestjs/axios';
+import PassportGoogleMobileUserResponseDto from '@/app/modules/auth/passport-js/dto/passport-google-mobile-user.response.dto';
 
 @Injectable()
 export class PassportJsService {
@@ -27,6 +30,7 @@ export class PassportJsService {
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
     private readonly i18nService: I18nService,
+    private readonly httpService: HttpService,
   ) {}
 
   async login(req: any, provider: OauthProvider, clientIp: string): Promise<any> {
@@ -74,6 +78,66 @@ export class PassportJsService {
     };
   }
 
+  async getUserFromGoogle(access_token: string) {
+    try {
+      const response = await this.httpService.axiosRef.get<PassportGoogleMobileUserResponseDto>(
+        AppConfig.authProviders.google.userInfoUrl,
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        },
+      );
+
+      return response.data;
+    } catch (e) {
+      throw new UnauthorizedException(e);
+    }
+  }
+
+  async loginMobile(
+    passportGoogleMobileLoginPayloadDto: PassportGoogleMobileLoginPayloadDto,
+    provider: OauthProvider,
+    hostname: string,
+    language: Language,
+  ) {
+    const user = await this.getUserFromGoogle(passportGoogleMobileLoginPayloadDto.access_token);
+
+    if (!user) {
+      throw new HttpException('Not found', 401);
+    }
+
+    const tokenCode = v4();
+    const existingCredentials = await this.findExistingCredentials(provider, user.id);
+
+    if (existingCredentials?.id) {
+      await this.updateTokenCode(existingCredentials.id, tokenCode);
+      await this.usersRepository.update(
+        { uuid: existingCredentials.user.uuid },
+        { is_two_factor_confirmed: false },
+      );
+
+      return await this.getTokenByCode(tokenCode, hostname, language);
+    }
+
+    const existingUser = await this.getUser(user, provider);
+
+    if (existingUser.status === UserStatusEnum.BLOCKED) {
+      throw new UnauthorizedException('Your account is blocked');
+    }
+
+    const createdOauthCredentials = await this.oauthCredentialRepository.save({
+      user_id: existingUser.id,
+      email: user.email,
+      provider: provider,
+      provider_user_id: user.id,
+      token_activation_code: tokenCode,
+      photo: user.picture,
+    });
+
+    return await this.getTokenByCode(createdOauthCredentials.token_activation_code, hostname, language);
+  }
+
   private async findExistingCredentials(provider: OauthProvider, providerUserId: string) {
     return await this.oauthCredentialRepository.findOne({
       where: {
@@ -101,9 +165,9 @@ export class PassportJsService {
 
   private async getUser(user: any, provider: OauthProvider) {
     let existingUser = await this.usersService.findExistingUser(user.email, provider);
-
     if (!existingUser) {
-      existingUser = await this.usersService.create(user.email, `${user.firstName} ${user.lastName}`);
+      const name = user.name ? user.name : `${user.firstName} ${user.lastName}`;
+      existingUser = await this.usersService.create(user.email, name);
     }
 
     return existingUser;
@@ -141,7 +205,6 @@ export class PassportJsService {
           isTwoFactorConfirmed: existingCredentials.user.is_two_factor_confirmed,
           isTwoFactorEnable: existingCredentials.user.is_two_factor_enable,
           role: existingCredentials.user.role,
-          avatarUrl: existingCredentials.photo,
         },
       ),
       {
