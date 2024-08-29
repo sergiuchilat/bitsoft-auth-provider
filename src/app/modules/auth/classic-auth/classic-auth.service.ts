@@ -253,7 +253,7 @@ export class ClassicAuthService {
       if (classicAuthRegisterPayloadDto.send_password_on_email) {
         await this.mailerService.sendActivationEmailV2(
           classicAuthRegisterPayloadDto.email,
-          this.generateActivationLink(activationCode),
+          this.generateActivationLink(activationCode, classicAuthRegisterPayloadDto.extra_fields),
           classicAuthRegisterPayloadDto.password,
           classicAuthRegisterPayloadDto.name,
           language,
@@ -261,7 +261,7 @@ export class ClassicAuthService {
       } else {
         await this.mailerService.sendActivationEmail(
           classicAuthRegisterPayloadDto.email,
-          this.generateActivationLink(activationCode),
+          this.generateActivationLink(activationCode, classicAuthRegisterPayloadDto.extra_fields),
           classicAuthRegisterPayloadDto.name,
           language,
         );
@@ -628,9 +628,15 @@ export class ClassicAuthService {
       message: 'Email updated successfully',
     };
   }
+  private readonly stringifyObject = (extraFields = {}) => {
+    return Object.keys(extraFields)
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(extraFields[key])}`)
+      .join('&');
+  };
 
-  private generateActivationLink(token: string) {
-    return process.env.CLASSIC_AUTH_ACTIVATION_LINK.replace('{token}', token);
+  private generateActivationLink(token: string, extraFields?: any) {
+    const link = process.env.CLASSIC_AUTH_ACTIVATION_LINK.replace('{token}', token);
+    return extraFields ? `${link}&${this.stringifyObject(extraFields)}` : link;
   }
 
   private generateResetPasswordLink(token: string) {

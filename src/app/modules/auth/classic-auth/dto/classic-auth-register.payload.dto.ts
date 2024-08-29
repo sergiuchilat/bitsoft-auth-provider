@@ -25,4 +25,8 @@ export default class ClassicAuthRegisterPayloadDto {
   @IsBoolean()
   @IsOptional()
   send_password_on_email?: boolean;
+
+  @ApiProperty({ example: { role: 'admin' }, description: 'Extra fields' })
+  @IsOptional()
+  extra_fields?: any;
 }
