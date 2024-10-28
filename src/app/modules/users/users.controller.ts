@@ -11,11 +11,13 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/app/modules/users/users.service';
 import { Response, Request } from 'express';
 import { UserPaginatorDto } from '@/app/modules/users/dto/user-paginator.dto';
 import { UserChangeRolePayloadDto } from '@/app/modules/users/dto/user-change-role.payload.dto';
+import { RequestUser } from '@/app/request/decorators/request-user.decorator';
+import RequestUserInterface from '@/app/request/interfaces/request-user.Interface';
 
 @ApiTags('Users')
 @Controller({
@@ -59,6 +61,13 @@ export class UsersController {
     // Unblock a user by uuid. Just system admin can unblock a user
     // when user is unblocked he can use any of the auth methods
     response.status(HttpStatus.OK).send(this.usersService.unblock(uuid));
+  }
+
+  @ApiOperation({ summary: 'Delete account' })
+  @Delete('/delete-account')
+  @ApiBearerAuth()
+  async deleteAccount(@Res() response: Response, @RequestUser() user: RequestUserInterface): Promise<any> {
+    response.status(HttpStatus.OK).send(await this.usersService.delete(user.uuid));
   }
 
   @ApiOperation({ summary: 'Delete user' })

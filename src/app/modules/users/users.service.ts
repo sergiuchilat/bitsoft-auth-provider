@@ -10,6 +10,9 @@ import { PaginateResponseDto } from '@/app/response/dto/paginate-response.dto';
 import { UserPaginatorDto } from '@/app/modules/users/dto/user-paginator.dto';
 import { Language } from '@/app/enum/language.enum';
 import { UserChangeRolePayloadDto } from '@/app/modules/users/dto/user-change-role.payload.dto';
+import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
+import { ClassicAuthEntity } from '@/app/modules/auth/classic-auth/classic-auth.entity';
+import { OauthCredentialEntity } from '@/app/modules/auth/passport-js/entities/oauth-credential.entity';
 
 @Injectable()
 export class UsersService {
@@ -109,11 +112,18 @@ export class UsersService {
 
   async delete(uuid: string): Promise<void> {
     await this.entityManager.transaction(async (manager) => {
-      const user = await manager.findOne(UserEntity, { where: { uuid } });
-
+      const user = await manager.findOne(UserEntity, {
+        where: { uuid },
+        relations: ['classicAuth', 'oAuth', 'log'],
+      });
+      console.log(uuid || 'no ');
       if (!user) {
         throw new Error('User not found.');
       }
+
+      await manager.delete(AuthLogEntity, { user: { id: user.id } });
+      await manager.delete(ClassicAuthEntity, { user: { id: user.id } });
+      await manager.delete(OauthCredentialEntity, { user: { id: user.id } });
 
       await manager.remove(user);
     });
