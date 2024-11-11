@@ -353,7 +353,7 @@ export class ClassicAuthService {
         publicKey: AppConfig.jwt.publicKey,
       });
 
-      if (payload.props.authProvider === OauthProvider.CLASSIC) {
+      if (payload.props?.authProvider === OauthProvider.CLASSIC) {
         const existingUser = await this.classicAuthRepository.findOneByEmail(payload.props.email);
 
         return this.generateToken(existingUser, hostname);

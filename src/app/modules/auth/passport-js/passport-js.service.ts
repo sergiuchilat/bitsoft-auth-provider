@@ -215,10 +215,16 @@ export class PassportJsService {
     );
 
     const refreshToken = this.jwtService.sign(
-      {
-        email: existingCredentials.email,
-        provider: existingCredentials.provider,
-      },
+      TokenGeneratorService.generatePayload(
+        TokenType.REFRESH,
+        existingCredentials.user.uuid,
+        existingCredentials.provider,
+        {
+          email: existingCredentials.email,
+          uuid: existingCredentials.user.uuid,
+          provider: existingCredentials.provider,
+        },
+      ),
       {
         secret: AppConfig.jwt.privateKey,
         expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
