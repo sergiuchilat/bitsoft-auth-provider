@@ -221,7 +221,11 @@ export class ClassicAuthService {
     return this.passportJsService.generateToken(existingOAuthUser, hostname, language);
   }
 
-  async register(classicAuthRegisterPayloadDto: ClassicAuthRegisterPayloadDto, language: Language) {
+  async register(
+    classicAuthRegisterPayloadDto: ClassicAuthRegisterPayloadDto,
+    language: Language,
+    hostname: string,
+  ) {
     const activationCode = v4();
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -270,7 +274,15 @@ export class ClassicAuthService {
       await queryRunner.commitTransaction();
       console.log('registeredClassicCredentials', registeredClassicCredentials);
 
-      return plainToInstance(ClassicAuthRegisterResponseDto, registeredClassicCredentials);
+      const authTokens = this.generateToken(
+        { ...registeredClassicCredentials, user: existingUser },
+        hostname,
+      );
+
+      return plainToInstance(ClassicAuthRegisterResponseDto, {
+        ...registeredClassicCredentials,
+        ...authTokens,
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.log('Error registering user', error);

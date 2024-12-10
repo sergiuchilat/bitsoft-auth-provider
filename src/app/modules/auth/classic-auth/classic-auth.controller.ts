@@ -84,7 +84,13 @@ export class ClassicAuthController {
   ) {
     response
       .status(HttpStatus.CREATED)
-      .send(await this.classicAuthService.register(classicAuthRegisterPayloadDto, request.localization));
+      .send(
+        await this.classicAuthService.register(
+          classicAuthRegisterPayloadDto,
+          request.localization,
+          request.hostname,
+        ),
+      );
   }
 
   @ApiOperation({ summary: 'User registration with email' })
