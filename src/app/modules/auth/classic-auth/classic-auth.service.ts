@@ -90,7 +90,7 @@ export class ClassicAuthService {
     const digits = randomstring.generate({ length: Math.floor(length / 4), charset: '0123456789' });
     const symbols = randomstring.generate({
       length: length - 3 * Math.floor(length / 4),
-      charset: '!@#$%^&*()_+{}:"<>?`~[];,./\\'
+      charset: '!@#$%^&*'
     });
 
     const password = upperCase + lowerCase + digits + symbols;
