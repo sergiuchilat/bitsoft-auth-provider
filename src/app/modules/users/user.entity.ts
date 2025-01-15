@@ -30,10 +30,10 @@ export class UserEntity {
   email: string;
 
   @Column({
-    type: 'string',
+    type: 'varchar',
     default: UserRoleEnum.PUBLIC_USER,
   })
-  role: UserRoleEnum;
+  role: string;
 
   @Column({
     nullable: false,
