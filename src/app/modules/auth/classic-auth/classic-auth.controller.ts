@@ -106,6 +106,7 @@ export class ClassicAuthController {
         await this.classicAuthService.registerV2(
           classicAuthRegisterWithoutPasswordPayloadDto,
           request.localization,
+          request.hostname,
         ),
       );
   }

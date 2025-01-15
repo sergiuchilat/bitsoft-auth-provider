@@ -4,7 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
@@ -29,22 +29,32 @@ import utc from 'dayjs/plugin/utc';
 import { TokenType } from '@/app/modules/common/enums/token-type.enum';
 import { Language } from '@/app/enum/language.enum';
 import { I18nService } from 'nestjs-i18n';
-import ClassicAuthActivateResendPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
-import ClassicAuthResetPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
-import ClassicAuthResetPasswordConfirmPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
-import ClassicAuthChangePasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
-import ClassicAuthUpdateEmailPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
-import ClassicAuthUpdateEmailResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.response.dto';
-import ClassicAuthVerifyResetPasswordResponseDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-reset-password.response.dto';
+import ClassicAuthActivateResendPayloadDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-activate-resend.payload.dto';
+import ClassicAuthResetPasswordPayloadDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password.payload.dto';
+import ClassicAuthResetPasswordConfirmPayloadDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-reset-password-confirm.payload.dto';
+import ClassicAuthChangePasswordPayloadDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-change-password.payload.dto';
+import ClassicAuthUpdateEmailPayloadDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.payload.dto';
+import ClassicAuthUpdateEmailResponseDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-update-email.response.dto';
+import ClassicAuthVerifyResetPasswordResponseDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-reset-password.response.dto';
 import { AuthLogEntity } from '@/app/modules/auth-log/entities/auth-log.entity';
 import { PassportJsService } from '@/app/modules/auth/passport-js/passport-js.service';
-import { ClassicAuthRefreshTokenPayloadDto } from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
+import {
+  ClassicAuthRefreshTokenPayloadDto
+} from '@/app/modules/auth/classic-auth/dto/classic-auth-refresh-token.payload.dto';
 import * as qrcode from 'qrcode';
 import { authenticator } from 'otplib';
 import ClassicAuthVerifyQrPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-verify-qr.payload.dto';
 import RequestUserInterface from '@/app/request/interfaces/request-user.Interface';
 import { UsersRepository } from '@/app/modules/users/users.repository';
-import ClassicAuthRegisterWithoutPasswordPayloadDto from '@/app/modules/auth/classic-auth/dto/classic-auth-register-without-password.payload.dto';
+import ClassicAuthRegisterWithoutPasswordPayloadDto
+  from '@/app/modules/auth/classic-auth/dto/classic-auth-register-without-password.payload.dto';
 import randomstring from 'randomstring';
 
 dayjs.extend(utc);
@@ -63,7 +73,7 @@ export class ClassicAuthService {
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
     private readonly i18nService: I18nService,
-    private readonly passportJsService: PassportJsService,
+    private readonly passportJsService: PassportJsService
   ) {
     this.codeExpiresIn = AppConfig.authProviders.classic.code_expires_in;
   }
@@ -71,16 +81,16 @@ export class ClassicAuthService {
   private generatePassword(length = 12): string {
     const upperCase = randomstring.generate({
       length: Math.floor(length / 4),
-      charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      charset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     });
     const lowerCase = randomstring.generate({
       length: Math.floor(length / 4),
-      charset: 'abcdefghijklmnopqrstuvwxyz',
+      charset: 'abcdefghijklmnopqrstuvwxyz'
     });
     const digits = randomstring.generate({ length: Math.floor(length / 4), charset: '0123456789' });
     const symbols = randomstring.generate({
       length: length - 3 * Math.floor(length / 4),
-      charset: '!@#$%^&*()_+{}:"<>?`~[];,./\\',
+      charset: '!@#$%^&*()_+{}:"<>?`~[];,./\\'
     });
 
     const password = upperCase + lowerCase + digits + symbols;
@@ -98,19 +108,19 @@ export class ClassicAuthService {
     classicAuthLoginPayloadDto: ClassicAuthLoginPayloadDto,
     language: Language,
     clientIp: string,
-    hostname: string,
+    hostname: string
   ): Promise<AuthLoginResponseDto> {
     await this.authLogRepository.save({
       email: classicAuthLoginPayloadDto.email,
-      ip: clientIp,
+      ip: clientIp
     });
 
     const existingUser = await this.classicAuthRepository.findOne({
       where: {
         email: classicAuthLoginPayloadDto.email,
-        user_id: Not(IsNull()),
+        user_id: Not(IsNull())
       },
-      relations: ['user'],
+      relations: ['user']
     });
     const passwordMatch = await compare(classicAuthLoginPayloadDto.password, existingUser?.password || '');
 
@@ -118,8 +128,8 @@ export class ClassicAuthService {
       await this.usersRepository.update(
         { uuid: existingUser.user.uuid },
         {
-          is_two_factor_confirmed: false,
-        },
+          is_two_factor_confirmed: false
+        }
       );
 
       return this.generateToken(
@@ -127,18 +137,18 @@ export class ClassicAuthService {
           ...existingUser,
           user: {
             ...existingUser.user,
-            is_two_factor_confirmed: false,
-          },
+            is_two_factor_confirmed: false
+          }
         },
-        hostname,
+        hostname
       );
     }
 
     throw new HttpException(
       this.i18nService.t('auth.errors.invalid_credentials', {
-        lang: language,
+        lang: language
       }),
-      HttpStatus.UNAUTHORIZED,
+      HttpStatus.UNAUTHORIZED
     );
   }
 
@@ -153,14 +163,14 @@ export class ClassicAuthService {
         {
           two_fa_secret: null,
           is_two_factor_enable: false,
-          is_two_factor_confirmed: false,
-        },
+          is_two_factor_confirmed: false
+        }
       );
 
       return {
         message: this.i18nService.t('auth.success.two_factor_turned_off', {
-          lang: language,
-        }),
+          lang: language
+        })
       };
     }
 
@@ -169,8 +179,8 @@ export class ClassicAuthService {
     await this.usersRepository.update(
       { uuid: user.uuid },
       {
-        two_fa_secret: secret,
-      },
+        two_fa_secret: secret
+      }
     );
 
     return qrcode.toDataURL(otpAuthUrl);
@@ -180,22 +190,22 @@ export class ClassicAuthService {
     classicAuthVerifyQrPayloadDto: ClassicAuthVerifyQrPayloadDto,
     user: RequestUserInterface,
     hostname: string,
-    language: Language,
+    language: Language
   ) {
     const existingUser = await this.usersRepository.findOne({
       where: { uuid: user.uuid },
-      select: ['two_fa_secret'],
+      select: ['two_fa_secret']
     });
     const isValid = authenticator.verify({
       secret: existingUser.two_fa_secret,
-      token: classicAuthVerifyQrPayloadDto.code,
+      token: classicAuthVerifyQrPayloadDto.code
     });
 
     if (!isValid) {
       throw new UnauthorizedException(
         this.i18nService.t('auth.errors.invalid_authentication_code', {
-          lang: language,
-        }),
+          lang: language
+        })
       );
     }
 
@@ -203,8 +213,8 @@ export class ClassicAuthService {
       { uuid: user.uuid },
       {
         is_two_factor_enable: true,
-        is_two_factor_confirmed: true,
-      },
+        is_two_factor_confirmed: true
+      }
     );
 
     if (user.authProvider === OauthProvider.CLASSIC) {
@@ -215,7 +225,7 @@ export class ClassicAuthService {
 
     const existingOAuthUser = await this.passportJsService.findExistingCredentialsByEmailAndProvider(
       user.authProvider,
-      user.email,
+      user.email
     );
 
     return this.passportJsService.generateToken(existingOAuthUser, hostname, language);
@@ -224,7 +234,7 @@ export class ClassicAuthService {
   async register(
     classicAuthRegisterPayloadDto: ClassicAuthRegisterPayloadDto,
     language: Language,
-    hostname: string,
+    hostname: string
   ) {
     const activationCode = v4();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -234,14 +244,14 @@ export class ClassicAuthService {
     try {
       let existingUser = await this.usersService.findExistingUser(
         classicAuthRegisterPayloadDto.email,
-        OauthProvider.CLASSIC,
+        OauthProvider.CLASSIC
       );
 
       if (!existingUser) {
         existingUser = await queryRunner.manager.save(UserEntity, {
           email: classicAuthRegisterPayloadDto.email,
           name: classicAuthRegisterPayloadDto.name,
-          uuid: v4(),
+          uuid: v4()
         });
       }
 
@@ -251,7 +261,7 @@ export class ClassicAuthService {
         status: AuthMethodStatus.NEW,
         name: classicAuthRegisterPayloadDto.name,
         password: await hash(classicAuthRegisterPayloadDto.password, 10),
-        user_id: existingUser.id,
+        user_id: existingUser.id
       });
 
       if (classicAuthRegisterPayloadDto.send_password_on_email) {
@@ -260,14 +270,14 @@ export class ClassicAuthService {
           this.generateActivationLink(activationCode, classicAuthRegisterPayloadDto.extra_fields),
           classicAuthRegisterPayloadDto.password,
           classicAuthRegisterPayloadDto.name,
-          language,
+          language
         );
       } else {
         await this.mailerService.sendActivationEmail(
           classicAuthRegisterPayloadDto.email,
           this.generateActivationLink(activationCode, classicAuthRegisterPayloadDto.extra_fields),
           classicAuthRegisterPayloadDto.name,
-          language,
+          language
         );
       }
 
@@ -276,12 +286,13 @@ export class ClassicAuthService {
 
       const authTokens = this.generateToken(
         { ...registeredClassicCredentials, user: existingUser },
-        hostname,
+        hostname
       );
 
       return plainToInstance(ClassicAuthRegisterResponseDto, {
         ...registeredClassicCredentials,
         ...authTokens,
+        uuid: existingUser.uuid
       });
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -289,17 +300,19 @@ export class ClassicAuthService {
 
       throw new HttpException(
         this.i18nService.t('auth.errors.error_registering', {
-          lang: language,
+          lang: language
         }),
-        HttpStatus.CONFLICT,
+        HttpStatus.CONFLICT
       );
     } finally {
       await queryRunner.release();
     }
   }
+
   async registerV2(
     classicAuthRegisterWithoutPasswordPayloadDto: ClassicAuthRegisterWithoutPasswordPayloadDto,
     language: Language,
+    hostname: string
   ) {
     const activationCode = v4();
     const queryRunner = this.dataSource.createQueryRunner();
@@ -308,14 +321,14 @@ export class ClassicAuthService {
     try {
       let existingUser = await this.usersService.findExistingUser(
         classicAuthRegisterWithoutPasswordPayloadDto.email,
-        OauthProvider.CLASSIC,
+        OauthProvider.CLASSIC
       );
 
       if (!existingUser) {
         existingUser = await queryRunner.manager.save(UserEntity, {
           email: classicAuthRegisterWithoutPasswordPayloadDto.email,
           name: classicAuthRegisterWithoutPasswordPayloadDto.name,
-          uuid: v4(),
+          uuid: v4()
         });
       }
 
@@ -327,7 +340,7 @@ export class ClassicAuthService {
         status: AuthMethodStatus.NEW,
         name: classicAuthRegisterWithoutPasswordPayloadDto.name,
         password: await hash(password, 10),
-        user_id: existingUser.id,
+        user_id: existingUser.id
       });
 
       await this.mailerService.sendActivationEmailV2(
@@ -335,19 +348,28 @@ export class ClassicAuthService {
         this.generateActivationLink(activationCode),
         password,
         classicAuthRegisterWithoutPasswordPayloadDto.name,
-        language,
+        language
       );
       await queryRunner.commitTransaction();
 
-      return plainToInstance(ClassicAuthRegisterResponseDto, registeredClassicCredentials);
+      const authTokens = this.generateToken(
+        { ...registeredClassicCredentials, user: existingUser },
+        hostname
+      );
+
+      return plainToInstance(ClassicAuthRegisterResponseDto, {
+        ...registeredClassicCredentials,
+        ...authTokens,
+        uuid: existingUser.uuid
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(
         this.i18nService.t('auth.errors.error_registering', {
-          lang: language,
+          lang: language
         }),
-        HttpStatus.CONFLICT,
+        HttpStatus.CONFLICT
       );
     } finally {
       await queryRunner.release();
@@ -357,12 +379,12 @@ export class ClassicAuthService {
   async refreshToken(
     classicAuthRefreshTokenPayloadDto: ClassicAuthRefreshTokenPayloadDto,
     hostname: string,
-    language: Language,
+    language: Language
   ) {
     try {
       const payload = this.jwtService.verify(classicAuthRefreshTokenPayloadDto.refreshToken, {
         algorithms: ['RS256'],
-        publicKey: AppConfig.jwt.publicKey,
+        publicKey: AppConfig.jwt.publicKey
       });
 
       if (payload.props?.authProvider === OauthProvider.CLASSIC) {
@@ -375,24 +397,24 @@ export class ClassicAuthService {
     } catch (e) {
       throw new UnauthorizedException(
         this.i18nService.t('auth.errors.invalid_refresh_token', {
-          lang: language,
-        }),
+          lang: language
+        })
       );
     }
   }
 
   async resendActivationEmail(
     classicAuthActivateResendPayloadDto: ClassicAuthActivateResendPayloadDto,
-    language: Language,
+    language: Language
   ) {
     const message = {
       message: this.i18nService.t('auth.mail.activation', {
-        lang: language,
-      }),
+        lang: language
+      })
     };
     try {
       const user = await this.classicAuthRepository.findOne({
-        where: { email: classicAuthActivateResendPayloadDto.email },
+        where: { email: classicAuthActivateResendPayloadDto.email }
       });
 
       if (!user) {
@@ -404,15 +426,15 @@ export class ClassicAuthService {
         { email: user.email },
         {
           activation_code: activationCode,
-          created_at: new Date(),
-        },
+          created_at: new Date()
+        }
       );
 
       await this.mailerService.sendActivationEmail(
         classicAuthActivateResendPayloadDto.email,
         this.generateActivationLink(activationCode),
         user.name,
-        language,
+        language
       );
 
       return message;
@@ -438,26 +460,26 @@ export class ClassicAuthService {
 
     const existingClassicCredentials = await this.classicAuthRepository.findOne({
       where: {
-        activation_code: token,
+        activation_code: token
       },
-      relations: ['user'],
+      relations: ['user']
     });
 
     if (!existingClassicCredentials) {
       throw new HttpException(
         this.i18nService.t('auth.errors.invalid_activation_link', {
-          lang: language,
+          lang: language
         }),
-        HttpStatus.NOT_FOUND,
+        HttpStatus.NOT_FOUND
       );
     }
 
     if (existingClassicCredentials.status === AuthMethodStatus.ACTIVE) {
       throw new HttpException(
         this.i18nService.t('auth.errors.account_already_active', {
-          lang: language,
+          lang: language
         }),
-        HttpStatus.CONFLICT,
+        HttpStatus.CONFLICT
       );
     }
 
@@ -469,21 +491,21 @@ export class ClassicAuthService {
         {
           activation_code: token,
           status: AuthMethodStatus.NEW,
-          created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
+          created_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired())
         },
         {
           status: AuthMethodStatus.ACTIVE,
           user_id: existingClassicCredentials.user_id,
           activation_code: null,
-          name: existingClassicCredentials.name,
-        },
+          name: existingClassicCredentials.name
+        }
       );
 
       if (!result?.affected) {
         const message = {
           message: this.i18nService.t('auth.errors.invalid_token', {
-            lang: language,
-          }),
+            lang: language
+          })
         };
         throw new HttpException(message, HttpStatus.NOT_FOUND);
       }
@@ -501,28 +523,28 @@ export class ClassicAuthService {
             email: existingClassicCredentials.user.email,
             name: existingClassicCredentials.user.name,
             isActive: true,
-            role: existingClassicCredentials.user.role,
-          },
+            role: existingClassicCredentials.user.role
+          }
         ),
         {
           secret: AppConfig.jwt.privateKey,
           expiresIn: AppConfig.jwt.expiresIn,
-          algorithm: 'RS256',
-        },
+          algorithm: 'RS256'
+        }
       );
 
       return {
         token: token,
         activation_token: activationToken,
-        status: AuthMethodStatus.ACTIVE,
+        status: AuthMethodStatus.ACTIVE
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.log('Error activate user', error);
       const message = {
         message: this.i18nService.t('auth.errors.activate_user', {
-          lang: language,
-        }),
+          lang: language
+        })
       };
       throw new HttpException(message, HttpStatus.BAD_REQUEST);
     } finally {
@@ -536,15 +558,15 @@ export class ClassicAuthService {
 
   async startResetPassword(
     classicAuthResetPasswordPayloadDto: ClassicAuthResetPasswordPayloadDto,
-    language: Language,
+    language: Language
   ) {
     const message = {
       message: this.i18nService.t('auth.mail.activation', {
-        lang: language,
-      }),
+        lang: language
+      })
     };
     const credentials = await this.classicAuthRepository.findOneByEmail(
-      classicAuthResetPasswordPayloadDto.email,
+      classicAuthResetPasswordPayloadDto.email
     );
 
     if (!credentials) {
@@ -558,7 +580,7 @@ export class ClassicAuthService {
     await this.mailerService.sendResetPasswordEmail(
       classicAuthResetPasswordPayloadDto.email,
       `${credentials.user.name}`,
-      this.generateResetPasswordLink(resetCode),
+      this.generateResetPasswordLink(resetCode)
     );
 
     return message;
@@ -568,8 +590,8 @@ export class ClassicAuthService {
     const credentials = await this.classicAuthRepository.findOne({
       where: {
         reset_password_code: token,
-        reset_password_code_expired_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired()),
-      },
+        reset_password_code_expired_at: MoreThan(this.calculateCreationDateOfTokenToBeExpired())
+      }
     });
 
     if (!credentials) {
@@ -580,19 +602,19 @@ export class ClassicAuthService {
   }
 
   public async resetPasswordConfirm(
-    classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto,
+    classicAuthResetPasswordConfirmPayloadDto: ClassicAuthResetPasswordConfirmPayloadDto
   ) {
     await this.verifyResetPassword(classicAuthResetPasswordConfirmPayloadDto.token);
 
     await this.classicAuthRepository.update(
       {
-        reset_password_code: classicAuthResetPasswordConfirmPayloadDto.token,
+        reset_password_code: classicAuthResetPasswordConfirmPayloadDto.token
       },
       {
         password: await hash(classicAuthResetPasswordConfirmPayloadDto.password, 10),
         reset_password_code: null,
-        reset_password_code_expired_at: null,
-      },
+        reset_password_code_expired_at: null
+      }
     );
 
     return 'Password reset successfully';
@@ -600,13 +622,13 @@ export class ClassicAuthService {
 
   public async changePassword(
     classicAuthChangePasswordPayloadDto: ClassicAuthChangePasswordPayloadDto,
-    user,
+    user
   ): Promise<ClassicAuthUpdateEmailResponseDto> {
     const existingUser = await this.usersService.findByUUID(user.uuid);
     const credentials = await this.classicAuthRepository.findOne({ where: { user_id: existingUser.id } });
     const matchPassword = await compare(
       classicAuthChangePasswordPayloadDto.old_password,
-      credentials.password,
+      credentials.password
     );
 
     if (!matchPassword) {
@@ -614,32 +636,33 @@ export class ClassicAuthService {
     }
 
     await this.classicAuthRepository.update(credentials.id, {
-      password: await hash(classicAuthChangePasswordPayloadDto.new_password, 10),
+      password: await hash(classicAuthChangePasswordPayloadDto.new_password, 10)
     });
 
     return {
-      message: 'Password changed successfully',
+      message: 'Password changed successfully'
     };
   }
 
   public async updateEmail(
     classicAuthUpdateEmailPayloadDto: ClassicAuthUpdateEmailPayloadDto,
-    user,
+    user
   ): Promise<ClassicAuthUpdateEmailResponseDto> {
     const existingUser = await this.usersService.findByUUID(user.uuid);
     await this.classicAuthRepository.update(
       { email: existingUser.email },
       {
-        email: classicAuthUpdateEmailPayloadDto.email,
-      },
+        email: classicAuthUpdateEmailPayloadDto.email
+      }
     );
 
     await this.usersService.updateEmail(user.uuid, classicAuthUpdateEmailPayloadDto.email);
 
     return {
-      message: 'Email updated successfully',
+      message: 'Email updated successfully'
     };
   }
+
   private readonly stringifyObject = (extraFields = {}) => {
     return Object.keys(extraFields)
       .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(extraFields[key])}`)
@@ -662,14 +685,14 @@ export class ClassicAuthService {
         existingUser.user.uuid,
         OauthProvider.CLASSIC,
         {
-          email: existingUser.user.email,
-        },
+          email: existingUser.user.email
+        }
       ),
       {
         secret: AppConfig.jwt.privateKey,
         expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
-        algorithm: 'RS256',
-      },
+        algorithm: 'RS256'
+      }
     );
 
     return {
@@ -685,16 +708,16 @@ export class ClassicAuthService {
             domain: hostname,
             isTwoFactorConfirmed: existingUser.user.is_two_factor_confirmed,
             isTwoFactorEnable: existingUser.user.is_two_factor_enable,
-            role: existingUser.user.role,
-          },
+            role: existingUser.user.role
+          }
         ),
         {
           secret: AppConfig.jwt.privateKey,
           expiresIn: AppConfig.jwt.expiresIn,
-          algorithm: 'RS256',
-        },
+          algorithm: 'RS256'
+        }
       ),
-      refresh_token: refreshToken,
+      refresh_token: refreshToken
     };
   }
 }
