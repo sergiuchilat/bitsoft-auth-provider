@@ -30,8 +30,7 @@ export class UserEntity {
   email: string;
 
   @Column({
-    type: 'enum',
-    enum: UserRoleEnum,
+    type: 'string',
     default: UserRoleEnum.PUBLIC_USER,
   })
   role: UserRoleEnum;
