@@ -10,8 +10,5 @@ export default class ClassicAuthResetPasswordConfirmPayloadDto {
   @Length(8, 255, {
     message: 'Password must contain from $constraint1 to $constraint2 characters',
   })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*d).+$/, {
-    message: 'Password must contain at least one lowercase letter, one uppercase letter, and one digit',
-  })
   password: string;
 }
