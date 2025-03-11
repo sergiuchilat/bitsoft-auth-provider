@@ -153,7 +153,9 @@ export class ClassicAuthController {
     @Param('token', ParseUUIDPipe) token: string,
     @Req() request: Request,
   ) {
-    response.status(HttpStatus.OK).send(await this.classicAuthService.activate(token, request.localization));
+    response.status(HttpStatus.OK).send(
+      await this.classicAuthService.activate(token, request.localization)
+    );
   }
 
   @ApiOperation({ summary: 'Resend activation email' })

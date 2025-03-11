@@ -536,7 +536,8 @@ export class ClassicAuthService {
       return {
         token: token,
         activation_token: activationToken,
-        status: AuthMethodStatus.ACTIVE
+        status: AuthMethodStatus.ACTIVE,
+        uuid: existingClassicCredentials.user.uuid
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
